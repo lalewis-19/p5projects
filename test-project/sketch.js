@@ -1,7 +1,92 @@
+var index = 0;
+var balls = [];
+var BALL_WIDTH = 40;
+var BALL_HEIGHT = 40;
+var canvas;
+
 function setup() {
-  
+	canvas = createCanvas(640, 320);
 }
 
 function draw() {
-  ellipse(50, 50, 80, 80);
+	clear();
+	background(127);
+	for (var q = 0; q < balls.length; q++){
+  		balls[q].drawBall();
+  		balls[q].collision();
+  		balls[q].move();
+  	}
+}
+
+function clearBalls(){
+	console.log("reset");
+	balls = [];
+	index = 0;
+}
+
+function resetCanvas(w, h){
+	clearBalls();
+	resizeCanvas(w, h);
+}
+
+function mousePressed(){
+	addBall(mouseX, mouseY);
+}
+
+function keyPressed(){
+	clearBalls();
+}
+
+// adds a ball to the array
+function addBall(x, y){
+	var deltax = (Math.random()*2)-1;
+	var deltay = (Math.random()*2)-1;
+	console.log("Adding ball: [x="+x+",y="+y+",dx="+deltax+",dy="+deltay);
+	balls[index] = new Ball(x, y, deltax, deltay);
+	index++;
+}
+
+// ball class
+function Ball(x, y, deltax, deltay){
+	this.x = x;
+	this.y = y;
+	this.deltax = deltax;
+	this.deltay = deltay;
+
+	// make sure that the ball does not start off outside of the canvas
+	console.log(this.x + " " + width);
+	if (this.x - (BALL_WIDTH/2) < 0)
+		this.x = BALL_WIDTH/2;
+	if (this.x + BALL_WIDTH/2 > width)
+		this.x = width-BALL_WIDTH/2;
+	if (this.y - BALL_HEIGHT/2 < 0)
+		this.y = BALL_HEIGHT/2;
+	if (this.y + BALL_HEIGHT/2 > height)
+		this.y = height-BALL_HEIGHT/2;
+
+	// draws the ball to the canvas
+	this.drawBall = function(){
+		fill(60, 120, 40); // green
+		ellipse(parseInt(this.x), parseInt(this.y), BALL_WIDTH, BALL_HEIGHT);
+		return;
+	};
+
+	// moves the ball based on the delta values
+	this.move = function(){
+		// console.log(this.x + ", " + this.y);
+		this.x += this.deltax;
+		this.y += this.deltay;
+		return;
+	};
+
+	// check for collision
+	this.collision = function(){
+		// reached right or left side of page
+		if (this.x+BALL_WIDTH/2 > width || this.x-BALL_WIDTH/2 < 0){
+			this.deltax *= -1;
+		}
+		if (this.y+BALL_HEIGHT/2 > height || this.y-BALL_HEIGHT/2 < 0){
+			this.deltay *= -1;
+		}
+	}
 }
