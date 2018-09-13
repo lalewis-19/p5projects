@@ -3,7 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>p5.js example</title>
+    <title>p5 test project</title>
+    <link rel="stylesheet" href="style.css">
     <style> body {padding: 0; margin: 0;} </style>
     <script src="../p5.min.js"></script>
     <script src="../addons/p5.dom.min.js"></script>
@@ -11,8 +12,23 @@
     <script src="sketch.js"></script>
   </head>
   <body>
-    <p>
-      whats up
-    </p>
+    <div id="main">
+      <div id="canvas-holder">
+        <!-- canvas goes here -->
+      </div>
+      <div id="form">
+        <p>Number on spawn:</p>
+        <input type="number" value="# spawned" placeholder="1" id="input-spawn"/>
+        <br/>
+
+        <p>Speed of balls:</p>
+        <input type="range" min="1" max="100" value="20" onChange="updateSpeed()" class="slider" id="input-speed">
+
+        <br/>
+
+        <input type="button" value="Reset" onclick="clearBalls();" id="input-reset"/>
+        
+      </div>
+    </div>
   </body>
 </html>

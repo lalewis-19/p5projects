@@ -3,14 +3,23 @@ var balls = [];
 var BALL_WIDTH = 40;
 var BALL_HEIGHT = 40;
 var canvas;
+var speedMultiplier = .5;
+var ballSpawns = 1;
 
 function setup() {
+	// setup canvas
 	canvas = createCanvas(640, 320);
+
+	// only recieve mouse input when clicked on canvas
+	canvas.mousePressed(onMousePressed);
+
+	// assign canvas to html div
+	canvas.parent("canvas-holder");
 }
 
 function draw() {
 	clear();
-	background(127);
+	background(128);
 	for (var q = 0; q < balls.length; q++){
   		balls[q].drawBall();
   		balls[q].collision();
@@ -18,32 +27,49 @@ function draw() {
   	}
 }
 
+// removes all the balls
 function clearBalls(){
 	console.log("reset");
 	balls = [];
 	index = 0;
 }
 
+// resizes the canvas and removes all the balls. This should be called instead of just resizing it.
 function resetCanvas(w, h){
 	clearBalls();
 	resizeCanvas(w, h);
 }
 
-function mousePressed(){
-	addBall(mouseX, mouseY);
+// mouse pressed
+function onMousePressed(){
+	updateSpeed();
+	updateBallSpawns();
+	addBall(mouseX, mouseY, ballSpawns);
 }
 
 function keyPressed(){
-	clearBalls();
+	//clearBalls();
 }
 
-// adds a ball to the array
-function addBall(x, y){
-	var deltax = (Math.random()*2)-1;
-	var deltay = (Math.random()*2)-1;
-	console.log("Adding ball: [x="+x+",y="+y+",dx="+deltax+",dy="+deltay);
-	balls[index] = new Ball(x, y, deltax, deltay);
-	index++;
+// update the speed of the balls from the html input
+function updateSpeed(){
+	speedMultiplier = (document.getElementById('input-speed').value)/20;
+}
+
+// update the ball spawns from the html input
+function updateBallSpawns(){
+	ballSpawns = Math.min(Math.max(parseInt(document.getElementById('input-spawn').value), 1), 20);
+}
+
+// adds balls to the array
+function addBall(x, y, n=1){
+	for (var q = 0; q < n; q++){
+		var deltax = (Math.random()*2)-1;
+		var deltay = (Math.random()*2)-1;
+		console.log("Adding ball: [x="+x+",y="+y+",dx="+deltax+",dy="+deltay);
+		balls[index] = new Ball(x, y, deltax, deltay);
+		index++;
+	}
 }
 
 // ball class
@@ -74,8 +100,8 @@ function Ball(x, y, deltax, deltay){
 	// moves the ball based on the delta values
 	this.move = function(){
 		// console.log(this.x + ", " + this.y);
-		this.x += this.deltax;
-		this.y += this.deltay;
+		this.x += (this.deltax*speedMultiplier);
+		this.y += (this.deltay*speedMultiplier);
 		return;
 	};
 
