@@ -1,22 +1,35 @@
 
+body {
+	height: 100%;
+}
+
 #main {
-	margin-left: auto;
-	margin-right: auto;
+	text-align:center;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
 
-	width: 70%;
-
-	/* This centers our sketch horizontally. */
-	justify-content: center;
-
-	/* This centers our sketch vertically. */
-	align-items: center;
+#main-content{
+	margin:auto;
+	display: inline-block;
+	text-align:left;
 }
 
 #canvas-holder{
-	border:3px solid black;
+	font-size:0;
+	float:left;
+	width:640px;
+	border:1px solid black;
+	padding: 0px;
+	display: inline-block;
 }
 
 #form{
+	/* text-align:center; */
+	margin-left:641px;
+	height: 450px;
 	border: 1px solid black;
 	padding: 5px;
+	width: 200px;
 }

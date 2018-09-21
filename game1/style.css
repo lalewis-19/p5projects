@@ -1,0 +1,17 @@
+
+#main {
+	text-align:center;
+	width: 100%;
+}
+
+#main-content{
+	margin:auto;
+	display:inline-block;
+}
+
+#canvas-holder{
+	font-size:0;
+	width:640px;
+	border:1px solid black;
+	display: inline-block;
+}

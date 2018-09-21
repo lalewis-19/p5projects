@@ -8,7 +8,7 @@ var ballSpawns = 1;
 
 function setup() {
 	// setup canvas
-	canvas = createCanvas(640, 320);
+	canvas = createCanvas(640, 460);
 
 	// only recieve mouse input when clicked on canvas
 	canvas.mousePressed(onMousePressed);
