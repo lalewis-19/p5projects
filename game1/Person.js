@@ -1,14 +1,30 @@
 
+var personCounter = 0;
+
+const OCCUPATION = {
+	UNEMPLOYED: 0,
+	FARMER: 1,
+	QUARRY_WORKER: 2,
+	FORREST_WORKER: 3
+}
+
+const SEX = {
+	MALE: 0,
+	FEMALE: 1
+}
+
 class Person{
 
-    constructor(x = 32, age = 0, sex = -1){
+    constructor(x = width/2, age = 0, sex = -1){
         // head info
         this.x = x;
         this.pWidth = 16;
         this.age = age;
         this.id = personCounter;
-        personCounter++;
-        this.picID = parseInt(Math.random()*2);
+		personCounter++;
+		this.hp = personHealth;
+		this.picID = parseInt(Math.random()*2);
+		this.hp = personHealth;
 
         /*
         0: Boy
@@ -21,7 +37,7 @@ class Person{
             this.sex = sex;
         }
 
-        if (this.sex == 0)
+        if (this.sex == SEX.MALE)
             this.fname = getRandomMaleName();
         else
             this.fname = getRandomFemaleName();
@@ -41,7 +57,7 @@ class Person{
         3: Forrest Worker
         */
         this.occupation = 0;
-        this.speed = 32.0+((Math.random()*7.0)-3.0); // 32 +/- 3
+        this.speed = personSpeed+(Math.floor(Math.random() * personSpeedRandom)); // 32 +/- 3
 
         /*
         Objective Types & data:
@@ -55,7 +71,10 @@ class Person{
         this.inBuilding = false;
         this.building = 0; // index in array
 
-        this.burning = false;
+		this.burning = false;
+		
+		// false when ill or on fire
+		this.canWork = true;
     }
 
 	draw(){
@@ -67,7 +86,7 @@ class Person{
 			var xIndent = 0;
 			if (this.burning)
 				xIndent = 1;
-			image(ss,this.x,height-blockSize-blockSize,blockSize/2,blockSize,this.sex*16+32*xIndent,this.picID*32+64,16,32);
+			image(ss,this.x,getGameHeight()-blockSize-blockSize,blockSize/2,blockSize,this.sex*16+32*xIndent,this.picID*32+64,16,32);
 		}
 	}
 
@@ -161,6 +180,13 @@ class Person{
 			this.die("old age");
 		}
 
+		// take damage
+		if (this.burning){
+			this.hp -= personBurnDamage/getFrameRate();
+			if (this.hp < 0)
+				this.die("burns");
+		}
+
         // TODO: this is realy confusing just clean it up and check every second or something
 		if (!this.lookingForLove && this.lover==-1){
 			// love
@@ -178,12 +204,12 @@ class Person{
 			}
 		}
 		// find mate
-		if (this.lover==-1 && openSpaceInHouses() && this.lookingForLove && (findClosestBuilding(this.x, 1)!=-1 || findClosestBuilding(this.x, 2)!=-1)){
+		if (this.lover==-1 && openSpaceInHouse(2) && this.lookingForLove && (findClosestBuilding(this.x, BUILDING_TYPE.WOODEN_HOUSE)!=-1 || findClosestBuilding(this.x, BUILDING_TYPE.STONE_HOUSE)!=-1)){
 			if (this.findLove()){
 				var index = -1;
-				index = findClosestBuilding(this.x, 1);
+				index = findClosestBuilding(this.x, BUILDING_TYPE.STONE_HOUSE);
 				if (index==-1)
-					index = findClosestBuilding(this.x, 2);
+					index = findClosestBuilding(this.x, BUILDING_TYPE.WOODEN_HOUSE);
 				getPersonByID(this.lover).goToBuilding(index);
 				this.goToBuilding(index);
 			}
@@ -206,25 +232,28 @@ class Person{
 
 	newObjective(){
 		this.leaveBuilding();
-		var buildingSearch = 0;
+		var buildingSearch;
 		this.occupation = 0;
 		if (needFarmers()){
-			console.log(getPeopleByOccupation(1));
 			this.occupation = 1;
-			buildingSearch = 3;
+			buildingSearch = BUILDING_TYPE.FARM;
 		}
 		else if (needForrestWorkers()){
 			this.occupation = 3;
-			buildingSearch = 6;
+			buildingSearch = BUILDING_TYPE.FORREST;
 		}
 		else if (needQuarryWorkers()){
 			this.occupation = 2;
-			buildingSearch = 5;
+			buildingSearch = BUILDING_TYPE.QUARRY;
 		}
 		// unemployed
 		else {
 			this.occupation = 0;
 		}
+
+		// can work
+		if (!this.canWork)
+			this.occupation = 0;
 		
 		// go to building to work
 		if (buildings.length>1 && this.occupation != 0){
@@ -249,6 +278,18 @@ class Person{
 			}
 		}
 		return false;
+	}
+
+	setBurning(burning=true){
+		this.burning = true;
+		this.canWork = !burning;
+	}
+
+	takeDamage(damage, reason){
+		this.hp -= damage;
+		if (this.hp < 0){
+			this.die(reason);
+		}
 	}
 
 	getFName(){
@@ -277,6 +318,14 @@ class Person{
 
 	getBuilding(){
 		return this.building;
+	}
+
+	getX(){
+		return this.x;
+	}
+
+	canWork(){
+		return this.canWork;
 	}
 
 	die(reason){

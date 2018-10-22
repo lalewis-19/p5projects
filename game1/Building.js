@@ -85,23 +85,26 @@ Types:
 
 class Building{
 
-    constructor(buildingStats){
+    constructor(buildingStats = BUILDING_TYPE.EMPTY){
 		this.buildingStats = buildingStats;
         this.burning = false;
 
         this.hp = buildingStats.hp;
         this.inhabitants = 0; // people in building
 
+		// false when on fire or blocked
+		this.useable = true;
     }
+
 
 	draw(x){
 		// https://github.com/processing/p5.js/issues/1567
 		fill(128, 128, 128, 128);
 		stroke(2);
 		// the +1 and having the width of 30 is because p5.js is stoopid
-		image(ss,x,height-blockSize*2,blockSize,blockSize,this.ssX*32+1,this.ssY*32,30,32);
+		image(ss,x,getGameHeight()-blockSize*2,blockSize,blockSize,this.buildingStats.ssx*32+1,this.buildingStats.ssy*32,30,32);
 		if (this.burning){
-			image(ss, x, height-blockSize*2, blockSize, blockSize, 32*7, 0, 32, 32);
+			image(ss, x, getGameHeight()-blockSize*2, blockSize, blockSize, 32*7, 0, 32, 32);
 		}
 	}
 
@@ -111,31 +114,42 @@ class Building{
 			return;
 		// building on fire
 		if (this.burning && this.canBurn){
-			this.hp -= (this.burnDamage/getFrameRate());
+			this.hp -= (burnDamage/getFrameRate());
 		} 
 		else if (this.hp<this.maxHP){
 			this.hp += (this.buildingRegenRate/getFrameRate());
 		}
 		// if building destroyed
-		if (this.hp < 0){
-			this.remove();
+		if (this.hp < 0 && this.buildingStats != BUILDING_TYPE.EMPTY){
+			this.destroy();
 		}
 		// do not let the building go over max
-		if (this.hp > this.maxHP){
-			this.hp = this.maxHP;
+		if (this.hp > this.buildingStats.hp){
+			this.hp = this.buildingStats.hp;
 		}
 		// production
-		switch (this.bType){
-			case 3:
+		switch (this.buildingStats){
+			case BUILDING_TYPE.FARM:
 				food += (foodProduction*this.inhabitants)/getFrameRate();
 				break;
-			case 5:
+			case BUILDING_TYPE.QUARRY:
 				stone += (stoneProduction*this.inhabitants)/getFrameRate();
 				break;
-			case 6:
+			case BUILDING_TYPE.FORREST:
 				wood += (woodProduction*this.inhabitants)/getFrameRate();
 				break;
 		}
+	}
+
+	takeDamage(damage){
+		this.hp -= damage;
+	}
+
+	setBurning(burning = true){
+		if (!this.canBurn)
+			return;
+		this.burning = burning;
+		this.useable = !burning;
 	}
 
 	// reset to 0 or empty
@@ -162,6 +176,10 @@ class Building{
 		return this.buildingStats.hs;
 	}
 
+	getEmptySpace(){
+		return this.getHousingSpace()-this.getInhabitants();
+	}
+
 	removePerson(){
 		this.inhabitants--;
 	}
@@ -172,6 +190,14 @@ class Building{
 
 	getType(){
 		return this.buildingStats;
+	}
+
+	isUseable(){
+		return this.useable;
+	}
+
+	canBurn(){
+		return this.buildingStats.canBurn;
 	}
 
 }
