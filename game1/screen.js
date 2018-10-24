@@ -181,6 +181,7 @@ class HUD extends SketchScreen {
         
         if (debugMode){
 			fill(255);
+			stroke(0);
 			text("needFarms:"+needFarms()+",needHouses:"+needHouses()
 				+",needForrest:"+needForrests()+",needQuarries:"+needQuarries(), 20, 32);
 
@@ -195,9 +196,10 @@ class HUD extends SketchScreen {
 
 class GlobalInfo extends CenteredPopUpScreen {
 	constructor(){
-		super(200, 200, color(255, 255, 255), color(0), true);
-		this.y -= hudHeight;
-		this.moveButtons(0, -hudHeight);
+		super(200, 200, color(255), color(0), true);
+		var offset = hudHeight/2+30;
+		this.y -= offset;
+		this.moveButtons(0, -offset);
 	}
 
 	draw(){
@@ -220,5 +222,21 @@ class GlobalInfo extends CenteredPopUpScreen {
 		text("Wood: " + parseInt(wood), this.x+5, this.y+15*7);
 		// stone
 		text("Stone: " + parseInt(stone), this.x+5, this.y+15*8);
+	}
+}
+
+class Tutorial1 extends CenteredPopUpScreen {
+	constructor(){
+		super(200, 200, color(255), color(0), true);
+		var offset = hudHeight/2+30
+		this.y -= offset;
+		this.moveButtons(0, -offset);
+		this.visible = true;
+		this.attention = true;
+	}
+	draw(){
+		stroke(1);
+		super.draw();
+		noStroke();
 	}
 }

@@ -1,4 +1,6 @@
 
+// TODO: issue where sometimes people will both be looking for love but wont fall in love
+// idk how to replicate.
 var personCounter = 0;
 
 const OCCUPATION = {
@@ -161,8 +163,9 @@ class Person{
 					this.newObjective();
 				}
 				// lover died :(
-				if (this.lover!=-1 && getPersonByID(this.lover)==null){
-					this.lover = -1;
+				if (this.lover != -1 && getPersonByID(this.lover) == null){
+					this.resetLove();
+					this.newObjective();
 				}
 				// lover in house
 				if (this.lover != -1 && getPersonByID(this.lover).isInBuilding() && getPersonByID(this.lover).getBuilding() == this.building){
@@ -234,7 +237,7 @@ class Person{
 					index = findClosestBuilding(this.x, BUILDING_TYPE.WOODEN_HOUSE);
 				getPersonByID(this.lover).goToBuilding(index);
 				this.goToBuilding(index);
-			}
+			} 
 		}
 	}
 

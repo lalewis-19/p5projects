@@ -92,7 +92,7 @@ const SPRITES = {
 	GRASS: new Sprite(192, 0, 32, 32),
 	BUILDING_FIRE: new Sprite(224, 0, 32, 32),
 	LIGHTNING_RIGHT: new Sprite(32, 32, 16, 32),
-	LIGHTNING_LEFT: new Sprite(48, 32, 16, 32),
+	LIGHTNING_LEFT: new Sprite(48, 32, 15, 31), // check values
 	// power effects
 	LIGHTNING_POWER_UNACTIVE: new Sprite(64, 32, 32, 32),
 	LIGHTNING_POWER_ACTIVE: new Sprite(96, 32, 32, 32),
@@ -121,7 +121,10 @@ function setup() {
 	screenManager = new SketchScreenManager();
 	screenManager.addScreen(new HUD());
 	screenManager.addScreen(new GlobalInfo());
+	screenManager.addScreen(new Tutorial1());
 
+	//Tutorial1
+	//Tutorial1
 	// only recieve mouse input when clicked on canvas
 	canvas.mousePressed(onMousePressed);
 	
