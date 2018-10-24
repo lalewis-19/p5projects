@@ -52,11 +52,70 @@ var hudHeight = 64;
 
 var screenManager;
 
+class Sprite {
+	constructor(x, y, w, h){
+		this.x = x;
+		this.y = y;
+		this.w = w;
+		this.h = h;
+	}
+
+	drawSprite(x, y, w, h){
+		image(ss, x, y, w, h, this.x, this.y, this.w, this.h);
+	}
+
+	getX(){
+		return this.x;
+	}
+
+	getY(){
+		return this.y;
+	}
+
+	getWidth(){
+		return this.w;
+	}
+
+	getHeight(){
+		return this.h;
+	}
+
+}
+
+const SPRITES = {
+	GRASS_BLOCK: new Sprite(0, 0, 32, 32),
+	WOODEN_HOUSE: new Sprite(32, 0, 32, 32),
+	FORREST: new Sprite(64, 0, 32, 32),
+	FARM: new Sprite(96, 0, 32, 32),
+	QUARRY: new Sprite(128, 0, 32, 32),
+	STONE_HOUSE: new Sprite(160, 0, 32, 32),
+	GRASS: new Sprite(192, 0, 32, 32),
+	BUILDING_FIRE: new Sprite(224, 0, 32, 32),
+	LIGHTNING_RIGHT: new Sprite(32, 32, 16, 32),
+	LIGHTNING_LEFT: new Sprite(48, 32, 16, 32),
+	// power effects
+	LIGHTNING_POWER_UNACTIVE: new Sprite(64, 32, 32, 32),
+	LIGHTNING_POWER_ACTIVE: new Sprite(96, 32, 32, 32),
+	SUN_POWER_ACTIVE: new Sprite(128, 32, 32, 32),
+	SUN_POWER_UNACTIVE: new Sprite(160, 32, 32, 32),
+	// character models
+	CHAR1_MALE: new Sprite(0, 64, 16, 32),
+	CHAR1_FEMALE: new Sprite(16, 64, 16, 32),
+	CHAR1_MALE_FIRE: new Sprite(32, 64, 16, 32),
+	CHAR1_FEMALE_FIRE: new Sprite(48, 64, 16, 32),
+	CHAR2_MALE: new Sprite(0, 96, 16, 32),
+	CHAR2_FEMALE: new Sprite(16, 96, 16, 32),
+	CHAR2_MALE_FIRE: new Sprite(32, 96, 16, 32),
+	CHAR2_FEMALE_FIRE: new Sprite(48, 96, 16, 32)
+}
+
 function setup() {
 	debugMode = false;
 
 	// setup canvas
 	canvas = createCanvas(640, 320+hudHeight);
+
+	setUpWorld(20);
 	
 	// setup screens
 	screenManager = new SketchScreenManager();
@@ -70,19 +129,17 @@ function setup() {
 	// assign canvas to html div
 	canvas.parent("canvas-holder");
 
-	ss = loadImage("https://i.imgur.com/2xdommg.png");
+	ss = loadImage("https://i.imgur.com/N7Sijug.png");
 	backgroundImage = loadImage("https://i.imgur.com/bLxcjh3.jpg");
 
 	setFrameRate(32);
-
-	setUpWorld(20);
 }
 
 /**
  * called when the a key is realesed
  */
 function keyReleased(){	
-	console.log(keyCode);
+	//console.log(keyCode);
 	if (keyCode==debugKey){
 		debugMode = !debugMode;
 		console.log("debug mode: " + debugMode);
@@ -94,6 +151,9 @@ function keyReleased(){
  * draw from p5js
  */
 function draw() {
+	//background(255);
+	//new Sprite(0, 32, 32, 32).drawSprite(0, 0, 640, 320);
+	///*
 	image(backgroundImage, 0, 0, width, getGameHeight());
 	fill(0,255,255);
 	rect(0, getGameHeight(), width, hudHeight);
@@ -101,7 +161,7 @@ function draw() {
 	builderAI();
 	for (var q = 0; q < buildings.length; q++){
 		// draw grass below building
-		image(ss,q*blockSize,getGameHeight()-blockSize,blockSize,blockSize,0,0,31,32);
+		SPRITES.GRASS_BLOCK.drawSprite(q*blockSize, getGameHeight()-blockSize, blockSize, blockSize);
 		buildings[q].draw(q*blockSize);
 		if (running)
 			buildings[q].update();
@@ -116,6 +176,7 @@ function draw() {
 		godPowers[q].update();
 	}
 	screenManager.draw();
+	//*/
 }
 
 function pause(){
@@ -133,7 +194,7 @@ function resume(){
 function setUpWorld(worldWidth){
 	buildings = [];
 	people = [new Person(width/2, 0, 0), new Person(width/2, 0, 1)];
-	godPowers = [new Lightning()];
+	godPowers = [new Lightning(), new Sun()];
 	for (var q = 0; q < worldWidth; q++){
 		buildings[q] = new Building();
 	}
@@ -141,7 +202,7 @@ function setUpWorld(worldWidth){
 
 function onMousePressed() {
 	for (var q = 0; q < godPowers.length; q++){
-		if (godPowers[q].isActive())
+		if (godPowers[q].isActive() && mouseY < getGameHeight())
 			godPowers[q].mouseClicked();
 	}
 	screenManager.onMouseReleased();
@@ -467,6 +528,19 @@ function explosion(x, radius, max, min = 0, reason = "explosion"){
 			people[q].takeDamage(damage, reason);
 		}
 	}
+}
+
+/**
+ * @returns the god power that matches the class otherwise null.
+ * @param {class} power class of the god power.
+ */
+function getGodPower(power){
+	for (var q = 0; q < godPowers.length; q++){
+		if (godPowers[q].constructor.name == power){
+			return godPowers[q];
+		}
+	}
+	return null;
 }
 
 /**

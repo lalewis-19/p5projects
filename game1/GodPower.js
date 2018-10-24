@@ -1,7 +1,9 @@
 
 class GodPower{
 
-    constructor(){
+    constructor(spriteActive, spriteUnactive){
+        this.spriteActive = spriteActive;
+        this.spriteUnactive = spriteUnactive;
         this.active = false;
     }
 
@@ -9,6 +11,18 @@ class GodPower{
     mouseClicked(){}
     update(){}
     draw(){}
+
+    toggleActivation(){
+        this.active = !this.active;
+    }
+
+    getSpriteActive(){
+        return this.spriteActive;
+    }
+
+    getSpriteUnactive(){
+        return this.spriteUnactive;
+    }
 
     isActive(){
         return this.active;
@@ -19,9 +33,8 @@ class GodPower{
 class Lightning extends GodPower{
     
     constructor(){
-        super();
+        super(SPRITES.LIGHTNING_POWER_ACTIVE, SPRITES.LIGHTNING_POWER_UNACTIVE);
 
-        this.active = true;
         this.bolts = [];
 
     }
@@ -62,10 +75,10 @@ class Bolt{
         for (var q = 0; q < groundY+1; q++){
             if (this.direction == 0){ // left
                 //console.log("left");
-                image(ss, this.x-16*q, 32*groundY-(q)*32, 16, 32, 32+16, 33, 16, 30);
+                SPRITES.LIGHTNING_LEFT.drawSprite(this.x-16*q, 32*groundY-(q)*32, 16, 32);
             }
             if (this.direction == 1) // right
-                image(ss, this.x+16*q, 32*groundY-q*32, 16, 32, 32, 33, 16, 30);
+                SPRITES.LIGHTNING_RIGHT.drawSprite(this.x+16*q, 32*groundY-q*32, 16, 32);
         }
     }
 
@@ -75,7 +88,9 @@ class Bolt{
 }
 
 class Sun extends GodPower{
-
+    constructor(){
+        super(SPRITES.SUN_POWER_ACTIVE, SPRITES.SUN_POWER_UNACTIVE);
+    }
 }
 
 /* 

@@ -14,61 +14,55 @@ const BUILDING_TYPE = {
         id: 0,
         stoneCost: 0,
         woodCost: 0,
-        ssx: 6,
-        ssy: 0,
         canBurn: false,
         hp: 0,
-        hs: 0
+		hs: 0,
+		sprite: SPRITES.GRASS
     },
     WOODEN_HOUSE : {
         id: 1,
         stoneCost: 0,
         woodCost: 15,
-        ssx: 1,
-        ssy: 0,
         canBurn: true,
         hp: 25.0,
-        hs: 3
+		hs: 3,
+		sprite: SPRITES.WOODEN_HOUSE
     },
     STONE_HOUSE : {
         id: 2,
         stoneCost: 15,
         woodCost: 5,
-        ssx: 5,
-        ssy: 0,
         canBurn: false,
         hp: 50.0,
-        hs: 15
+		hs: 15,
+		sprite: SPRITES.STONE_HOUSE
     },
     FARM : {
         id: 3,
         stoneCost: 0,
         woodCost: 3,
-        ssx: 3,
-        ssy: 0,
         canBurn: true,
         hp: 10.0,
-        hs: 1
+		hs: 1,
+		sprite: SPRITES.FARM
     },
     QUARRY : {
         id: 4,
         stoneCost: 0,
         woodCost: 25,
-        ssx: 4,
-        ssy: 0,
         canBurn: true,
         hp: 15.0,
-        hs: 1
+		hs: 1,
+		sprite: SPRITES.QUARRY
     },
     FORREST : {
         id: 5,
         stoneCost: 0,
         woodCost: 0,
-        ssx: 2,
-        ssy: 0,
         canBurn: true,
         hp: 15.0,
-        hs: 1
+		hs: 1,
+		sprite: SPRITES.FORREST
     }
 }
 
@@ -102,9 +96,9 @@ class Building{
 		fill(128, 128, 128, 128);
 		stroke(2);
 		// the +1 and having the width of 30 is because p5.js is stoopid
-		image(ss,x,getGameHeight()-blockSize*2,blockSize,blockSize,this.buildingStats.ssx*32+1,this.buildingStats.ssy*32,30,32);
+		this.buildingStats.sprite.drawSprite(x, getGameHeight()-blockSize*2,blockSize,blockSize);
 		if (this.burning){
-			image(ss, x, getGameHeight()-blockSize*2, blockSize, blockSize, 32*7, 0, 32, 32);
+			SPRITES.BUILDING_FIRE.drawSprite(x, getGameHeight()-blockSize*2, blockSize, blockSize);
 		}
 	}
 

@@ -126,7 +126,7 @@ class CenteredPopUpScreen extends SketchScreen {
 		if (exitButton){
 			this.addEntity(new SketchButton(function(screen) {
 				screen.close();
-			}, this.x+this.w-32, this.y+2, this.buttonW, this.buttonH, 27));
+			}, this.x+this.w-2-this.buttonW, this.y+2, this.buttonW, this.buttonH, 27));
 		}
 	}
 	draw(){
@@ -150,11 +150,25 @@ class HUD extends SketchScreen {
 		this.addEntity(new SketchButton(function(screen) {
 			screenManager.openScreen(GlobalInfo);
 		},width-100, getGameHeight()+15, 100, hudHeight, 71));
+		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures
+		for (var q = 0; q < godPowers.length; q++){
+			let index = q.valueOf();
+			var callback = function(screen) {
+				getGodPower(godPowers[index].constructor.name).toggleActivation();
+			}
+			this.addEntity(new SketchButton(callback, q * 48 +16, getGameHeight()+hudHeight/2-16, 32, 32, 49+q));
+		}
     }
 
     draw(){
         // TODO: draw lightning
-
+		for (var q = 0; q < godPowers.length; q++){
+			if (godPowers[q].isActive()){
+				godPowers[q].getSpriteActive().drawSprite(q * 48 +16, getGameHeight()+hudHeight/2-16, 32, 32);
+			} else {
+				godPowers[q].getSpriteUnactive().drawSprite(q * 48 +16, getGameHeight()+hudHeight/2-16, 32, 32);
+			}
+		}
         // draw global info: pop, food, wood, stone
         textAlign(LEFT);
         textSize(12);

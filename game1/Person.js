@@ -23,19 +23,40 @@ class Person{
         this.id = personCounter;
 		personCounter++;
 		this.hp = personHealth;
-		this.picID = parseInt(Math.random()*2);
 		this.hp = personHealth;
 
-        /*
+		/*
         0: Boy
         1: Girl
         */
-        if (sex!=1 && sex!=0){
-            // https://stackoverflow.com/questions/45136711/javascript-random-generate-0-or-1-integer
-            this.sex = Math.round(Math.random());
-        } else {
-            this.sex = sex;
-        }
+		if (sex!=1 && sex!=0){
+			// https://stackoverflow.com/questions/45136711/javascript-random-generate-0-or-1-integer
+			this.sex = Math.round(Math.random());
+		} else {
+			this.sex = sex;
+		}
+		switch (Math.round(Math.random())){
+			case 0:
+				if(this.sex==SEX.MALE){
+					this.sprite = SPRITES.CHAR1_MALE;
+					this.spriteFire = SPRITES.CHAR1_MALE_FIRE;
+				} else {
+					this.sprite = SPRITES.CHAR2_FEMALE;
+					this.spriteFire = SPRITES.CHAR2_FEMALE_FIRE;
+				}
+				break;
+			case 1:
+				if (this.sex = SEX.MALE){
+					this.sprite = SPRITES.CHAR2_MALE;
+					this.spriteFire = SPRITES.CHAR2_MALE_FIRE;
+				} else {
+					this.sprite = SPRITES.CHAR2_FEMALE;
+					this.spriteFire = SPRITES.CHAR2_FEMALE_FIRE;
+				}
+				break;
+			default:
+				console.log("default");
+		}
 
         if (this.sex == SEX.MALE)
             this.fname = getRandomMaleName();
@@ -83,10 +104,11 @@ class Person{
 			stroke(30, 30, 90);
 			//rect(this.x, height-blockSize-32, 16, 32);
 			// how far over should the picture be moved over to get a version of the player model that fits the status
-			var xIndent = 0;
-			if (this.burning)
-				xIndent = 1;
-			image(ss,this.x,getGameHeight()-blockSize-blockSize,blockSize/2,blockSize,this.sex*16+32*xIndent,this.picID*32+64,16,32);
+			if (this.burning){
+				this.spriteFire.drawSprite(this.x,getGameHeight()-blockSize-blockSize,blockSize/2,blockSize);
+			} else {
+				this.sprite.drawSprite(this.x,getGameHeight()-blockSize-blockSize,blockSize/2,blockSize);
+			}
 		}
 	}
 
