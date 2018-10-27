@@ -19,9 +19,10 @@ var stoneProduction = 0.5;
 var woodProduction = 1.0;
 
 // seconds to one year TODO
-var yearsPerSecond = .5;
+var secondsPerYear = 5;
+var yearsPerSecond = .5; // remove later once secondsPerYear has been implemented.
 
-// food eaten per person per second
+// food eaten per person per year
 var foodConsumption = 0.5;
 
 // burning
@@ -159,6 +160,7 @@ function draw() {
 	///*
 	image(backgroundImage, 0, 0, width, getGameHeight());
 	fill(0,255,255);
+	noStroke();
 	rect(0, getGameHeight(), width, hudHeight);
 	//console.log(getFrameRate());
 	builderAI();

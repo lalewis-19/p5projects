@@ -225,14 +225,23 @@ class GlobalInfo extends CenteredPopUpScreen {
 	}
 }
 
+/*
+Name: peasant village
+tutorial script:
+Welcome to peasant village! In this game you are a god who can control a village
+of peasants. In this tutorial we will go over some of the controls of the game.
+
+
+*/
+
 class Tutorial1 extends CenteredPopUpScreen {
 	constructor(){
 		super(200, 200, color(255), color(0), true);
 		var offset = hudHeight/2+30
 		this.y -= offset;
 		this.moveButtons(0, -offset);
-		this.visible = true;
-		this.attention = true;
+		//this.visible = true;
+		//this.attention = true;
 	}
 	draw(){
 		stroke(1);

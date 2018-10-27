@@ -90,8 +90,37 @@ class Bolt{
 class Sun extends GodPower{
     constructor(){
         super(SPRITES.SUN_POWER_ACTIVE, SPRITES.SUN_POWER_UNACTIVE);
+        this.maxInterval = 5;
+        this.minInterval = 1;
+        this.setNextBurnTime();
+    }
+
+    setNextBurnTime(){
+        // https://stackoverflow.com/questions/1527803/generating-random-whole-numbers-in-javascript-in-a-specific-range
+        this.nextBurn = new Date().getTime()+Math.floor(Math.random() * ((this.maxInterval*1000) - (this.minInterval*1000) + 1)) + (this.minInterval*1000);
+    }
+
+    update(){
+        if (new Date().getTime() >= this.nextBurn && this.active){
+            // burn
+            // TODO: random person or building need to find random building that isnt empty tho.
+            var index = Math.floor(Math.random() * (people.length));
+            if (index<people.length){
+                people[index].setBurning(true);
+            } else {
+                //burnBuilding();
+            }
+            this.setNextBurnTime();
+        }
     }
 }
+
+/*
+[1, 2, 3, 4]
+[1, 2]
+
+Length: 4
+*/
 
 /* 
 Other Ideas:

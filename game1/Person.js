@@ -37,9 +37,10 @@ class Person{
 		} else {
 			this.sex = sex;
 		}
+
 		switch (Math.round(Math.random())){
 			case 0:
-				if(this.sex==SEX.MALE){
+				if(this.sex == SEX.MALE){
 					this.sprite = SPRITES.CHAR1_MALE;
 					this.spriteFire = SPRITES.CHAR1_MALE_FIRE;
 				} else {
@@ -48,7 +49,7 @@ class Person{
 				}
 				break;
 			case 1:
-				if (this.sex = SEX.MALE){
+				if (this.sex == SEX.MALE){
 					this.sprite = SPRITES.CHAR2_MALE;
 					this.spriteFire = SPRITES.CHAR2_MALE_FIRE;
 				} else {
@@ -196,12 +197,13 @@ class Person{
 		if (this.hunger>=20){
 			this.die("starvation");
 		}
-
+		// secondsPerYear = 5
+		// secondsPerYear*fps = 1 year
 		// age
 		this.age += yearsPerSecond/getFrameRate();
 
 		// die of old age
-		if (this.age>=80){
+		if (this.age>=20){
 			this.die("old age");
 		}
 
