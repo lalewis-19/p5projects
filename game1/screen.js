@@ -161,23 +161,28 @@ class HUD extends SketchScreen {
     }
 
     draw(){
-        // TODO: draw lightning
+		// draw god powers
+		fill(0);
+		noStroke();
+		textSize(16);
+		text("God Powers", 8, getGameHeight()+16);
 		for (var q = 0; q < godPowers.length; q++){
 			if (godPowers[q].isActive()){
-				godPowers[q].getSpriteActive().drawSprite(q * 48 +16, getGameHeight()+hudHeight/2-16, 32, 32);
+				godPowers[q].getSpriteActive().drawSprite(q * 48 +8, getGameHeight()+hudHeight/2-8, 32, 32);
 			} else {
-				godPowers[q].getSpriteUnactive().drawSprite(q * 48 +16, getGameHeight()+hudHeight/2-16, 32, 32);
+				godPowers[q].getSpriteUnactive().drawSprite(q * 48 +8, getGameHeight()+hudHeight/2-8, 32, 32);
 			}
 		}
         // draw global info: pop, food, wood, stone
         textAlign(LEFT);
-        textSize(12);
+        textSize(14);
 		fill(0);
-		noStroke();
-        text("Population: " + parseInt(getPopulation()), width-100, getGameHeight()+15*1);
-        text("Wood: " + parseInt(wood), width-100, getGameHeight()+15*2);
-		text("Stone: " + parseInt(stone), width-100, getGameHeight()+15*3);
-        text("Food: " + parseInt(food), width-100, getGameHeight()+15*4);
+		noStroke(255);
+		var difference = 14;
+        text("Population: " + parseInt(getPopulation()), width-100, getGameHeight()+difference*1);
+        text("Wood: " + parseInt(wood), width-100, getGameHeight()+difference*2);
+		text("Stone: " + parseInt(stone), width-100, getGameHeight()+difference*3);
+        text("Food: " + parseInt(food), width-100, getGameHeight()+difference*4);
         
         if (debugMode){
 			fill(255);
@@ -190,6 +195,7 @@ class HUD extends SketchScreen {
 				occ += people[q].getOccupation()+",";
 			}
 			text("occupations:"+occ, 20, 48);
+			text("year: " + parseInt(gameYear), 20, 64);
 		}
     }
 }

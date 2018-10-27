@@ -127,17 +127,17 @@ class Person{
 				}
 				// to the left of objective go right
 				if (this.x < this.objective){
-					this.x += (this.speed/getFrameRate());
+					this.x += (this.speed/(getFrameRate()*secondsPerYear));
 				}
 				// to the right of objective go left
 				else if (this.x > this.objective){
-					this.x -= (this.speed/getFrameRate());
+					this.x -= (this.speed/(getFrameRate()*secondsPerYear));
 				}
 				break;
 			case 1: // go into to building
 				// check if at building door
 				if (this.x > blockSize*(this.objective) && this.x+this.pWidth < blockSize*(this.objective+1)){
-					if (!buildings[this.objective].isFull()){
+					if (!buildings[this.objective].isFull()){ // TODO: Error occured here on deaths
 						buildings[this.objective].addPerson();
 						this.inBuilding = true;
 						this.building = this.objective;
@@ -150,11 +150,11 @@ class Person{
 				}
 				// to the left and needs to go right
 				else if (this.x+this.pWidth < blockSize*(this.objective+1)){
-					this.x += (this.speed/getFrameRate());
+					this.x += (this.speed/(getFrameRate()*secondsPerYear));
 				}
 				// to the right and needs to go left
 				else if (this.x > blockSize*this.objective){
-					this.x -= (this.speed/getFrameRate());
+					this.x -= (this.speed/(getFrameRate()*secondsPerYear));
 				} 
 				break;
 			case 2:
@@ -183,15 +183,15 @@ class Person{
 		}
 		// food consumption
 		if (food>1){
-			food -= foodConsumption/getFrameRate();
+			food -= foodConsumption/(getFrameRate()*secondsPerYear);
 			if (this.hunger>0){
-				this.hunger -= 1/getFrameRate();
+				this.hunger -= 1/(getFrameRate()*secondsPerYear);
 				if (this.hunger < 0){
 					this.hunger = 0;
 				}
 			}
 		} else {
-			this.hunger += 1/getFrameRate();
+			this.hunger += 1/(getFrameRate()*secondsPerYear);
 		}
 		// starvation
 		if (this.hunger>=20){
@@ -200,16 +200,16 @@ class Person{
 		// secondsPerYear = 5
 		// secondsPerYear*fps = 1 year
 		// age
-		this.age += yearsPerSecond/getFrameRate();
+		this.age += 1/(getFrameRate()*secondsPerYear);
 
 		// die of old age
-		if (this.age>=20){
+		if (this.age>=80){
 			this.die("old age");
 		}
 
 		// take damage
 		if (this.burning){
-			this.hp -= personBurnDamage/getFrameRate();
+			this.hp -= personBurnDamage/(getFrameRate()*secondsPerYear);
 			if (this.hp < 0)
 				this.die("burns");
 		}
@@ -218,11 +218,11 @@ class Person{
 		if (!this.lookingForLove && this.lover==-1){
 			// love
 			// 0-5% chance increase in love
-			this.love += (Math.random()*5)/getFrameRate();
-			// 40% chance potentially fall in love + also have love% chance - only checks once per second
+			this.love += (personLove)/(getFrameRate()*secondsPerYear);
+			// have love% chance - only checks once per second
 			if (this.loveCheck>getFrameRate()){
 				this.loveCheck=0;
-				if (Math.random()<.4 && Math.random()*100 < this.love){
+				if (Math.random()*100 < this.love){
 					this.lookingForLove = true;
 					console.log("<Looking For Love> "+this.fname+"("+this.id+") is now looking for love");
 				}
@@ -231,7 +231,10 @@ class Person{
 			}
 		}
 		// find mate
-		if (this.lover==-1 && openSpaceInHouse(2) && this.lookingForLove && (findClosestBuilding(this.x, BUILDING_TYPE.WOODEN_HOUSE)!=-1 || findClosestBuilding(this.x, BUILDING_TYPE.STONE_HOUSE)!=-1)){
+		if (this.lover==-1 && openSpaceInHouse(2) && this.lookingForLove && 
+				(findClosestBuilding(this.x, BUILDING_TYPE.WOODEN_HOUSE)!=-1 || 
+				findClosestBuilding(this.x, BUILDING_TYPE.STONE_HOUSE)!=-1) 
+				&& !needHouses()){
 			if (this.findLove()){
 				var index = -1;
 				index = findClosestBuilding(this.x, BUILDING_TYPE.STONE_HOUSE);
@@ -286,11 +289,13 @@ class Person{
 		if (buildings.length>1 && this.occupation != 0){
 			this.objectiveType = 1;
 			this.objective = findClosestBuilding(this.x, buildingSearch);
+			if (this.objective==-1){console.log("error 1 " + buildingSearch + " " + this.occupation);}
 		}
 		// roaming
 		else {
 			this.objectiveType = 0;
 			this.objective = Math.random()*(blockSize*buildings.length);
+			if (this.objective==-1){console.log("error 2")};
 		}
 
 	}
@@ -373,6 +378,7 @@ class Person{
 	// called when someone else has decided to be this persons lover
 	fallInLove(id){
 		if (this.lookingForLove){
+			if (getPersonByID(id)==null){console.log(id);}
 			console.log("<Love> "+this.fname+"("+this.id+") has fallen in love with "+getPersonByID(id).getFName()+"("+id+")");
 			this.lookingForLove = false;
 			this.lover = id;
@@ -384,6 +390,7 @@ class Person{
 		this.leaveBuilding();
 		this.objectiveType = 1;
 		this.objective = index;
+		if (this.objective==-1){console.log("error 3")};
 	}
 
 }

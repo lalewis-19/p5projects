@@ -92,7 +92,7 @@ class Sun extends GodPower{
         super(SPRITES.SUN_POWER_ACTIVE, SPRITES.SUN_POWER_UNACTIVE);
         this.maxInterval = 5;
         this.minInterval = 1;
-        this.setNextBurnTime();
+        this.nextBurn = 0;
     }
 
     setNextBurnTime(){
@@ -101,26 +101,46 @@ class Sun extends GodPower{
     }
 
     update(){
+        // no immediate burn after setting to active or opening.
+        if (!this.active){
+            this.nextBurn = 0;
+        }
+        if (this.active && this.nextBurn == 0){
+            this.setNextBurnTime();
+            console.log("new burn");
+        }
         if (new Date().getTime() >= this.nextBurn && this.active){
             // burn
-            // TODO: random person or building need to find random building that isnt empty tho.
-            var index = Math.floor(Math.random() * (people.length));
+            console.log(getBuildingsNotByType(BUILDING_TYPE.EMPTY));
+            var index = Math.floor(Math.random() * (people.length+getBuildingsNotByType(BUILDING_TYPE.EMPTY)));
             if (index<people.length){
                 people[index].setBurning(true);
             } else {
-                //burnBuilding();
+                var subIndex = 0;
+                for (var q = 0; q < buildings.length; q++){
+                    if (buildings[q].getType()!=BUILDING_TYPE.EMPTY){
+                        if (index-people.length==subIndex){
+                            burnBuilding(q);
+                            break;
+                        }
+                        subIndex++;
+                    }
+                }
             }
             this.setNextBurnTime();
         }
     }
 }
 
-/*
-[1, 2, 3, 4]
-[1, 2]
+class SpawnPerson extends GodPower{
+    constructor(){
+        super(SPRITES.SUN_POWER_ACTIVE, SPRITES.SUN_POWER_UNACTIVE);
+    }
 
-Length: 4
-*/
+    mouseClicked(){
+        people[people.length] = new Person(mouseX);
+    }
+}
 
 /* 
 Other Ideas:

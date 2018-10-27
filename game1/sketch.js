@@ -19,8 +19,8 @@ var stoneProduction = 0.5;
 var woodProduction = 1.0;
 
 // seconds to one year TODO
-var secondsPerYear = 5;
-var yearsPerSecond = .5; // remove later once secondsPerYear has been implemented.
+var secondsPerYear = 1;
+var gameYear = 0.0;
 
 // food eaten per person per year
 var foodConsumption = 0.5;
@@ -32,9 +32,10 @@ var buildingRegenRate = 0.5;
 
 // people
 var personHealth = 100.0;
-var personSpeed = 32.0;
-var personSpeedRandom = 16; // +/- from the personSpeed
-var personBurnDamage = 10;
+var personSpeed = 320.0; // pixels traveled in a year
+var personSpeedRandom = 100; // +/- from the personSpeed
+var personBurnDamage = 25;
+var personLove = 5; // chance to fall in love % increase every year.
 
 // images
 var ss;
@@ -47,6 +48,9 @@ var running = true;
 // changes the display
 var debugMode;
 var debugKey = 192; // ascii code for `
+
+// TODO: https://www.1001fonts.com/dpcomic-font.html
+var font;
 
 // hud
 var hudHeight = 64;
@@ -110,13 +114,29 @@ const SPRITES = {
 	CHAR2_FEMALE_FIRE: new Sprite(48, 96, 16, 32)
 }
 
+function preload(){
+	// https://ff.static.1001fonts.net/d/p/dpcomic.regular.ttf
+	font = loadFont("fonts/dpcomic.ttf");
+	ss = loadImage("https://i.imgur.com/N7Sijug.png");
+	backgroundImage = loadImage("https://i.imgur.com/bLxcjh3.jpg");
+}
+
 function setup() {
 	debugMode = false;
 
 	// setup canvas
 	canvas = createCanvas(640, 320+hudHeight);
 
-	setUpWorld(20);
+	gameYear = 0.0;
+
+	var worldWidth = 20;
+
+	buildings = [];
+	people = [new Person(width/2, 0, 0), new Person(width/2, 0, 1)];
+	godPowers = [new Lightning(), new Sun(), new SpawnPerson()];
+	for (var q = 0; q < worldWidth; q++){
+		buildings[q] = new Building();
+	}
 	
 	// setup screens
 	screenManager = new SketchScreenManager();
@@ -128,13 +148,9 @@ function setup() {
 	//Tutorial1
 	// only recieve mouse input when clicked on canvas
 	canvas.mousePressed(onMousePressed);
-	
 
 	// assign canvas to html div
 	canvas.parent("canvas-holder");
-
-	ss = loadImage("https://i.imgur.com/N7Sijug.png");
-	backgroundImage = loadImage("https://i.imgur.com/bLxcjh3.jpg");
 
 	setFrameRate(32);
 }
@@ -155,11 +171,15 @@ function keyReleased(){
  * draw from p5js
  */
 function draw() {
+	textFont(font);
+	if (running){
+		gameYear += 1/(getFrameRate()*secondsPerYear);
+	}
 	//background(255);
 	//new Sprite(0, 32, 32, 32).drawSprite(0, 0, 640, 320);
 	///*
 	image(backgroundImage, 0, 0, width, getGameHeight());
-	fill(0,255,255);
+	fill(99,83,32);
 	noStroke();
 	rect(0, getGameHeight(), width, hudHeight);
 	//console.log(getFrameRate());
@@ -192,19 +212,6 @@ function resume(){
 	running = true;
 }
 
-/**
- * initalizes the buildings and people array.
- * @param {number} worldWidth the number of buildings on the map.
- */
-function setUpWorld(worldWidth){
-	buildings = [];
-	people = [new Person(width/2, 0, 0), new Person(width/2, 0, 1)];
-	godPowers = [new Lightning(), new Sun()];
-	for (var q = 0; q < worldWidth; q++){
-		buildings[q] = new Building();
-	}
-}
-
 function onMousePressed() {
 	for (var q = 0; q < godPowers.length; q++){
 		if (godPowers[q].isActive() && mouseY < getGameHeight())
@@ -226,7 +233,7 @@ function needFarms(){
  * @returns true if there are more farms then there are farmers.
  */
 function needFarmers(){
-	return getBuildingsByType(BUILDING_TYPE.FARM) > getPeopleByOccupation(OCCUPATION.FARMER);
+	return getUseableBuildingsByType(BUILDING_TYPE.FARM) > getPeopleByOccupation(OCCUPATION.FARMER);
 }
 
 /**
@@ -257,7 +264,7 @@ function needForrests(){
  * @returns true if there are more forrests than forrest workers.
  */
 function needForrestWorkers(){
-	return getBuildingsByType(BUILDING_TYPE.FORREST) > getPeopleByOccupation(OCCUPATION.FORREST_WORKER);
+	return getUseableBuildingsByType(BUILDING_TYPE.FORREST) > getPeopleByOccupation(OCCUPATION.FORREST_WORKER);
 }
 
 /**
@@ -272,7 +279,7 @@ function needQuarries(){
  * @returns true if there are more quarries than there are quarry workers.
  */
 function needQuarryWorkers(){
-	return getBuildingsByType(BUILDING_TYPE.QUARRY) > getPeopleByOccupation(OCCUPATION.QUARRY_WORKER);
+	return getUseableBuildingsByType(BUILDING_TYPE.QUARRY) > getPeopleByOccupation(OCCUPATION.QUARRY_WORKER);
 }
 
 /**
@@ -311,6 +318,34 @@ function getBuildingsByType(bType){
 	var sum = 0;
 	for (var q = 0; q < buildings.length; q++){
 		if (buildings[q].getType()==bType){
+			sum++;
+		}
+	}
+	return sum;
+}
+
+/**
+ * @returns the sum of the buildings that match the building type
+ * @param {*} bType 
+ */
+function getUseableBuildingsByType(bType){
+	var sum = 0;
+	for (var q = 0; q < buildings.length; q++){
+		if (buildings[q].getType()==bType && buildings[q].isUseable()){
+			sum++;
+		}
+	}
+	return sum;
+}
+
+/**
+ * @returns the sum of the buildings that do not match the building type.
+ * @param {Object} bType the BUILDING_TYPE value for which building it is not.
+ */
+function getBuildingsNotByType(bType){
+	var sum = 0;
+	for (var q = 0; q < buildings.length; q++){
+		if (buildings[q].getType()!=bType){
 			sum++;
 		}
 	}

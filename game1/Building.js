@@ -108,10 +108,10 @@ class Building{
 			return;
 		// building on fire
 		if (this.burning && this.canBurn){
-			this.hp -= (burnDamage/getFrameRate());
+			this.hp -= (burnDamage/(getFrameRate()*secondsPerYear));
 		} 
 		else if (this.hp<this.maxHP){
-			this.hp += (this.buildingRegenRate/getFrameRate());
+			this.hp += (this.buildingRegenRate/(getFrameRate()*secondsPerYear));
 		}
 		// if building destroyed
 		if (this.hp < 0 && this.buildingStats != BUILDING_TYPE.EMPTY){
@@ -124,13 +124,13 @@ class Building{
 		// production
 		switch (this.buildingStats){
 			case BUILDING_TYPE.FARM:
-				food += (foodProduction*this.inhabitants)/getFrameRate();
+				food += (foodProduction*this.inhabitants)/(getFrameRate()*secondsPerYear);
 				break;
 			case BUILDING_TYPE.QUARRY:
-				stone += (stoneProduction*this.inhabitants)/getFrameRate();
+				stone += (stoneProduction*this.inhabitants)/(getFrameRate()*secondsPerYear);
 				break;
 			case BUILDING_TYPE.FORREST:
-				wood += (woodProduction*this.inhabitants)/getFrameRate();
+				wood += (woodProduction*this.inhabitants)/(getFrameRate()*secondsPerYear);
 				break;
 		}
 	}
