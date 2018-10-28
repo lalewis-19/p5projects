@@ -19,14 +19,16 @@ var stoneProduction = 0.5;
 var woodProduction = 1.0;
 
 // seconds to one year TODO
-var secondsPerYear = 1;
+var secondsPerYear = 8;
 var gameYear = 0.0;
+var speeds = [{name:"x.5", speed: 16}, {name:"x1", speed: 8}, {name:"x2", speed: 4}, {name:"x4", speed: 2}, {name:"x8", speed: 1}];
+var speedIndex = 1;
 
 // food eaten per person per year
 var foodConsumption = 0.5;
 
 // burning
-var burnDamage = 4;
+var burnDamage = 50;
 var burnStopChance = 0.3; // chances of a burning building to stop burning 0 - no chance, 1 - 100% chance
 var buildingRegenRate = 0.5;
 
@@ -34,7 +36,7 @@ var buildingRegenRate = 0.5;
 var personHealth = 100.0;
 var personSpeed = 320.0; // pixels traveled in a year
 var personSpeedRandom = 100; // +/- from the personSpeed
-var personBurnDamage = 25;
+var personBurnDamage = 100; // per year
 var personLove = 5; // chance to fall in love % increase every year.
 
 // images
@@ -99,10 +101,12 @@ const SPRITES = {
 	LIGHTNING_RIGHT: new Sprite(32, 32, 16, 32),
 	LIGHTNING_LEFT: new Sprite(48, 32, 15, 31), // check values
 	// power effects
-	LIGHTNING_POWER_UNACTIVE: new Sprite(64, 32, 32, 32),
-	LIGHTNING_POWER_ACTIVE: new Sprite(96, 32, 32, 32),
+	LIGHTNING_POWER_ACTIVE: new Sprite(64, 32, 32, 32),
+	LIGHTNING_POWER_UNACTIVE: new Sprite(96, 32, 32, 32),
 	SUN_POWER_ACTIVE: new Sprite(128, 32, 32, 32),
 	SUN_POWER_UNACTIVE: new Sprite(160, 32, 32, 32),
+	SPAWN_POWER_ACTIVE: new Sprite(192, 32, 32, 32),
+	SPAWN_POWER_UNACTIVE: new Sprite(224, 32, 32, 32),
 	// character models
 	CHAR1_MALE: new Sprite(0, 64, 16, 32),
 	CHAR1_FEMALE: new Sprite(16, 64, 16, 32),
@@ -111,13 +115,17 @@ const SPRITES = {
 	CHAR2_MALE: new Sprite(0, 96, 16, 32),
 	CHAR2_FEMALE: new Sprite(16, 96, 16, 32),
 	CHAR2_MALE_FIRE: new Sprite(32, 96, 16, 32),
-	CHAR2_FEMALE_FIRE: new Sprite(48, 96, 16, 32)
+	CHAR2_FEMALE_FIRE: new Sprite(48, 96, 16, 32),
+	// other
+	PAUSE: new Sprite(288, 0, 24, 24),
+	RESUME: new Sprite(288, 24, 24, 24),
+	HELP: new Sprite(256, 0, 32, 32),
 }
 
 function preload(){
 	// https://ff.static.1001fonts.net/d/p/dpcomic.regular.ttf
 	font = loadFont("fonts/dpcomic.ttf");
-	ss = loadImage("https://i.imgur.com/N7Sijug.png");
+	ss = loadImage("images/ss.png");
 	backgroundImage = loadImage("https://i.imgur.com/bLxcjh3.jpg");
 }
 
@@ -126,8 +134,6 @@ function setup() {
 
 	// setup canvas
 	canvas = createCanvas(640, 320+hudHeight);
-
-	gameYear = 0.0;
 
 	var worldWidth = 20;
 
@@ -143,6 +149,9 @@ function setup() {
 	screenManager.addScreen(new HUD());
 	screenManager.addScreen(new GlobalInfo());
 	screenManager.addScreen(new Tutorial1());
+	screenManager.addScreen(new Tutorial2());
+	screenManager.addScreen(new Tutorial3());
+	screenManager.addScreen(new Tutorial4());
 
 	//Tutorial1
 	//Tutorial1
@@ -172,7 +181,7 @@ function keyReleased(){
  */
 function draw() {
 	textFont(font);
-	if (running){
+	if (running && getFrameRate() != 0 && secondsPerYear != 0){
 		gameYear += 1/(getFrameRate()*secondsPerYear);
 	}
 	//background(255);
@@ -219,8 +228,6 @@ function onMousePressed() {
 	}
 	screenManager.onMouseReleased();
 }
-
-
 
 /**
  * @returns true needFarmers() returns false and needFoodProduction returns true.
@@ -326,7 +333,7 @@ function getBuildingsByType(bType){
 
 /**
  * @returns the sum of the buildings that match the building type
- * @param {*} bType 
+ * @param {Object} bType the BUILDING_TYPE value for which building it is.
  */
 function getUseableBuildingsByType(bType){
 	var sum = 0;
@@ -336,6 +343,13 @@ function getUseableBuildingsByType(bType){
 		}
 	}
 	return sum;
+}
+
+function toggleSpeed(){
+	speedIndex++;
+	if (speedIndex >= speeds.length)
+		speedIndex = 0;
+	secondsPerYear = speeds[speedIndex].speed;
 }
 
 /**

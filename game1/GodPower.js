@@ -107,7 +107,6 @@ class Sun extends GodPower{
         }
         if (this.active && this.nextBurn == 0){
             this.setNextBurnTime();
-            console.log("new burn");
         }
         if (new Date().getTime() >= this.nextBurn && this.active){
             // burn
@@ -134,7 +133,7 @@ class Sun extends GodPower{
 
 class SpawnPerson extends GodPower{
     constructor(){
-        super(SPRITES.SUN_POWER_ACTIVE, SPRITES.SUN_POWER_UNACTIVE);
+        super(SPRITES.SPAWN_POWER_ACTIVE, SPRITES.SPAWN_POWER_UNACTIVE);
     }
 
     mouseClicked(){

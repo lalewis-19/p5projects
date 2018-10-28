@@ -191,11 +191,12 @@ class Person{
 				}
 			}
 		} else {
-			this.hunger += 1/(getFrameRate()*secondsPerYear);
+			this.hunger += 3/(getFrameRate()*secondsPerYear);
 		}
 		// starvation
 		if (this.hunger>=20){
 			this.die("starvation");
+			return;
 		}
 		// secondsPerYear = 5
 		// secondsPerYear*fps = 1 year
@@ -205,13 +206,16 @@ class Person{
 		// die of old age
 		if (this.age>=80){
 			this.die("old age");
+			return;
 		}
 
 		// take damage
 		if (this.burning){
 			this.hp -= personBurnDamage/(getFrameRate()*secondsPerYear);
-			if (this.hp < 0)
+			if (this.hp < 0){
 				this.die("burns");
+				return;
+			}
 		}
 
         // TODO: this is realy confusing just clean it up and check every second or something
@@ -234,7 +238,7 @@ class Person{
 		if (this.lover==-1 && openSpaceInHouse(2) && this.lookingForLove && 
 				(findClosestBuilding(this.x, BUILDING_TYPE.WOODEN_HOUSE)!=-1 || 
 				findClosestBuilding(this.x, BUILDING_TYPE.STONE_HOUSE)!=-1) 
-				&& !needHouses()){
+				&& !needHouses() && this.canWork){
 			if (this.findLove()){
 				var index = -1;
 				index = findClosestBuilding(this.x, BUILDING_TYPE.STONE_HOUSE);
@@ -289,13 +293,11 @@ class Person{
 		if (buildings.length>1 && this.occupation != 0){
 			this.objectiveType = 1;
 			this.objective = findClosestBuilding(this.x, buildingSearch);
-			if (this.objective==-1){console.log("error 1 " + buildingSearch + " " + this.occupation);}
 		}
 		// roaming
 		else {
 			this.objectiveType = 0;
 			this.objective = Math.random()*(blockSize*buildings.length);
-			if (this.objective==-1){console.log("error 2")};
 		}
 
 	}
@@ -378,7 +380,6 @@ class Person{
 	// called when someone else has decided to be this persons lover
 	fallInLove(id){
 		if (this.lookingForLove){
-			if (getPersonByID(id)==null){console.log(id);}
 			console.log("<Love> "+this.fname+"("+this.id+") has fallen in love with "+getPersonByID(id).getFName()+"("+id+")");
 			this.lookingForLove = false;
 			this.lover = id;
@@ -390,7 +391,6 @@ class Person{
 		this.leaveBuilding();
 		this.objectiveType = 1;
 		this.objective = index;
-		if (this.objective==-1){console.log("error 3")};
 	}
 
 }

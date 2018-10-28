@@ -9,13 +9,31 @@ class SketchScreenManager {
 		}
     }
 	onMouseReleased(){
+		var attention = [];
 		for (var q = 0; q < this.screens.length; q++){
-			this.screens[q].onMouseReleased();
+			if (this.screens[q].hasAttention()){
+				attention[q] = true;
+			} else {
+				attention[q] = false;
+			}
+		}
+		for (var q = 0; q < this.screens.length; q++){
+			if (attention[q])
+				this.screens[q].onMouseReleased();
 		}
 	}
 	onKeyReleased(){
+		var attention = [];
 		for (var q = 0; q < this.screens.length; q++){
-			this.screens[q].onKeyReleased();
+			if (this.screens[q].hasAttention()){
+				attention[q] = true;
+			} else {
+				attention[q] = false;
+			}
+		}
+		for (var q = 0; q < this.screens.length; q++){
+			if (attention[q])
+				this.screens[q].onKeyReleased();
 		}
     }
     addScreen(screen){
@@ -149,18 +167,44 @@ class HUD extends SketchScreen {
 		this.attention = true;
 		this.addEntity(new SketchButton(function(screen) {
 			screenManager.openScreen(GlobalInfo);
-		},width-100, getGameHeight()+15, 100, hudHeight, 71));
+		},width-100, getGameHeight()+15, 100, hudHeight, 71)); // g
+		this.addEntity(new SketchButton(function(screen) {
+			toggleSpeed();
+		}, width-136, getGameHeight()+4, 24, 24, null));
+		this.addEntity(new SketchButton(function(screen) {
+			if (running){
+				pause();
+			} else {
+				resume();
+			}
+		}, width-136, getGameHeight()+12+24, 24, 24, null));
+		this.addEntity(new SketchButton(function(screen) {
+			screenManager.openScreen(Tutorial1);
+		}, width-34, 2, 32, 32, 72)); // h
 		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures
 		for (var q = 0; q < godPowers.length; q++){
 			let index = q.valueOf();
 			var callback = function(screen) {
 				getGodPower(godPowers[index].constructor.name).toggleActivation();
 			}
-			this.addEntity(new SketchButton(callback, q * 48 +16, getGameHeight()+hudHeight/2-16, 32, 32, 49+q));
+			this.addEntity(new SketchButton(callback, q * 48 +8, getGameHeight()+hudHeight/2-8, 32, 32, 49+q));
 		}
     }
 
     draw(){
+		// year
+		fill(99,83,32);
+		stroke(0);
+		var sideLength = 32;
+		rect(width/2-sideLength, 0, sideLength*2, 32);
+		textAlign(CENTER);
+		textSize(20);
+		fill(255);
+		stroke(0);
+		text("YEAR", width/2, 16);
+		text(""+parseInt(gameYear), width/2, 30);
+		textAlign(LEFT);
+		SPRITES.HELP.drawSprite(width-34, 2, 32, 32);
 		// draw god powers
 		fill(0);
 		noStroke();
@@ -174,28 +218,44 @@ class HUD extends SketchScreen {
 			}
 		}
         // draw global info: pop, food, wood, stone
-        textAlign(LEFT);
         textSize(14);
 		fill(0);
-		noStroke(255);
+		noStroke();
 		var difference = 14;
         text("Population: " + parseInt(getPopulation()), width-100, getGameHeight()+difference*1);
         text("Wood: " + parseInt(wood), width-100, getGameHeight()+difference*2);
 		text("Stone: " + parseInt(stone), width-100, getGameHeight()+difference*3);
-        text("Food: " + parseInt(food), width-100, getGameHeight()+difference*4);
+		text("Food: " + parseInt(food), width-100, getGameHeight()+difference*4);
+		
+		stroke(0);
+		noFill();
+		rect(width-136, getGameHeight()+4, 24, 24);
+		rect(width-136, getGameHeight()+12+24, 24, 24);
+		fill(0);
+		noStroke();
+		textAlign(CENTER);
+		textSize(22);
+		text(speeds[speedIndex].name, width-136+12, getGameHeight()+4+24-4);
+		if (running){
+			SPRITES.PAUSE.drawSprite(width-136, getGameHeight()+12+24, 24, 24);
+		} else {
+			SPRITES.RESUME.drawSprite(width-136, getGameHeight()+12+24, 24, 24);
+		}
         
         if (debugMode){
 			fill(255);
 			stroke(0);
+			textAlign(LEFT);
+			textSize(12);
 			text("needFarms:"+needFarms()+",needHouses:"+needHouses()
-				+",needForrest:"+needForrests()+",needQuarries:"+needQuarries(), 20, 32);
+				+",needForrest:"+needForrests()+",needQuarries:"+needQuarries(), 20, 64);
 
 			var occ = "";
 			for (var q = 0; q < people.length; q++){
 				occ += people[q].getOccupation()+",";
 			}
-			text("occupations:"+occ, 20, 48);
-			text("year: " + parseInt(gameYear), 20, 64);
+			text("occupations:"+occ, 20, 80);
+			text("year: " + parseInt(gameYear), 20, 96);
 		}
     }
 }
@@ -232,12 +292,27 @@ class GlobalInfo extends CenteredPopUpScreen {
 }
 
 /*
+Tutorial Script
 Name: peasant village
 tutorial script:
 Welcome to peasant village! In this game you are a god who can control a village
 of peasants. In this tutorial we will go over some of the controls of the game.
 
+buildings:
+There are three main resources: food, wood, and stone. Wood and stone are building materials 
+that are required to build. Food is consumed by the peasants so they do not die of starvation.
+The village will produce these resources as long as a peasant is occupying the right building.
+Farms produce food, forrests produce wood, quarries produce stone. Wooden and stone houses 
+do not produce any resources, although they do increase the housing space of the vilage and 
+are required for reproduction.
 
+You can gain more insight on the resource production and population by pressing g or click on 
+the values displayed in the lower right corner.
+
+You can use the god powers in the lower left corner by activating them (which will make the icon glow up)
+and then by clicking on the map. You can also press the number assigned to the god power.
+
+You can control the speed of time and pause/resume the game in the lower right corner.
 */
 
 class Tutorial1 extends CenteredPopUpScreen {
@@ -245,13 +320,98 @@ class Tutorial1 extends CenteredPopUpScreen {
 		super(200, 200, color(255), color(0), true);
 		var offset = hudHeight/2+30
 		this.y -= offset;
+		this.addEntity(new SketchButton(function(screen) {
+			screenManager.openScreen(Tutorial2);
+			screen.close();
+		},this.x, this.y, this.w-this.buttonW, this.h, 13)); // enter
 		this.moveButtons(0, -offset);
-		//this.visible = true;
-		//this.attention = true;
 	}
 	draw(){
 		stroke(1);
 		super.draw();
 		noStroke();
+		textSize(12);
+		fill(0);
+		textAlign(LEFT);
+		var message = "Welcome to peasant village! In this game you are a god who can control a village of peasants. "
+				+"In this tutorial we will go over some of the controls of the game. Press Enter to continue.";
+		text(message, this.x+2, this.y+6, this.w-this.buttonW, this.h);
+	}
+}
+
+class Tutorial2 extends CenteredPopUpScreen {
+	constructor(){
+		super(200, 200, color(255), color(0), true);
+		var offset = hudHeight/2+30
+		this.y -= offset;
+		this.addEntity(new SketchButton(function(screen) {
+			screenManager.openScreen(Tutorial3);
+			screen.close();
+		},this.x, this.y, this.w-this.buttonW, this.h, 13)); // enter
+		this.moveButtons(0, -offset);
+	}
+	draw(){
+		stroke(1);
+		super.draw();
+		noStroke();
+		textSize(12);
+		fill(0);
+		textAlign(LEFT);
+		var message = "There are three main resources: food, wood, and stone. Wood and stone are building materials " +
+				"that are required to build. Food is consumed by the peasants so they do not die of starvation. " +
+				"The village will produce these resources as long as a peasant is occupying the right building. " +
+				"Farms produce food, forrests produce wood, quarries produce stone. Press Enter to continue.";
+		text(message, this.x+2, this.y+6, this.w-this.buttonW, this.h);
+	}
+}
+
+class Tutorial3 extends CenteredPopUpScreen {
+	constructor(){
+		super(200, 200, color(255), color(0), true);
+		var offset = hudHeight/2+30
+		this.y -= offset;
+		this.addEntity(new SketchButton(function(screen) {
+			screenManager.openScreen(Tutorial4);
+			screen.close();
+		},this.x, this.y, this.w-this.buttonW, this.h, 13)); // enter
+		this.moveButtons(0, -offset);
+	}
+	draw(){
+		stroke(1);
+		super.draw();
+		noStroke();
+		textSize(12);
+		fill(0);
+		textAlign(LEFT);
+		var message = "Wooden and stone houses " +
+				"do not produce any resources, although they do increase the housing space of the vilage and " +
+				"are required for reproduction.\n\n" + 
+				"You can gain more insight on the resource production and population by pressing g or click on " +
+				"the values displayed in the lower right corner. Press Enter to continue.";
+		text(message, this.x+2, this.y+6, this.w-this.buttonW, this.h);
+	}
+}
+
+class Tutorial4 extends CenteredPopUpScreen {
+	constructor(){
+		super(200, 200, color(255), color(0), true);
+		var offset = hudHeight/2+30
+		this.y -= offset;
+		this.addEntity(new SketchButton(function(screen) {
+			screen.close();
+		},this.x, this.y, this.w-this.buttonW, this.h, 13)); // enter
+		this.moveButtons(0, -offset);
+	}
+	draw(){
+		stroke(1);
+		super.draw();
+		noStroke();
+		textSize(12);
+		fill(0);
+		textAlign(LEFT);
+		var message = "You can use the god powers in the lower left corner by activating them (which will make the icon glow up) " +
+				"and then by clicking on the map. You can also press the number assigned to the god power.\n\n" +
+				"You can control the speed of time and pause/resume the game in the lower right corner. Press Enter to exit.";
+		text(message, this.x+2, this.y+6, this.w-this.buttonW, this.h);
 	}
 }

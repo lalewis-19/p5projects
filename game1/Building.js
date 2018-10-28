@@ -1,6 +1,3 @@
-console.log("loaded building file");
-
-
 /*
 var WOODEN_HOUSE = {bType:1, wood:15, stone:0};
 var STONE_HOUSE = {bType:2, wood:5, stone:15};
@@ -24,7 +21,7 @@ const BUILDING_TYPE = {
         stoneCost: 0,
         woodCost: 15,
         canBurn: true,
-        hp: 25.0,
+        hp: 50.0,
 		hs: 3,
 		sprite: SPRITES.WOODEN_HOUSE
     },
@@ -33,7 +30,7 @@ const BUILDING_TYPE = {
         stoneCost: 15,
         woodCost: 5,
         canBurn: false,
-        hp: 50.0,
+        hp: 100.0,
 		hs: 15,
 		sprite: SPRITES.STONE_HOUSE
     },
@@ -42,7 +39,7 @@ const BUILDING_TYPE = {
         stoneCost: 0,
         woodCost: 3,
         canBurn: true,
-        hp: 10.0,
+        hp: 25.0,
 		hs: 1,
 		sprite: SPRITES.FARM
     },
@@ -51,7 +48,7 @@ const BUILDING_TYPE = {
         stoneCost: 0,
         woodCost: 25,
         canBurn: true,
-        hp: 15.0,
+        hp: 25.0,
 		hs: 1,
 		sprite: SPRITES.QUARRY
     },
@@ -60,7 +57,7 @@ const BUILDING_TYPE = {
         stoneCost: 0,
         woodCost: 0,
         canBurn: true,
-        hp: 15.0,
+        hp: 10.0,
 		hs: 1,
 		sprite: SPRITES.FORREST
     }
