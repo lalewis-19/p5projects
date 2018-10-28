@@ -1,8 +1,13 @@
+// p5js
 var canvas;
+
 var blockSize = 32; // pixels
+
 // all arrays
 var buildings;
 var people;
+var godPowers;
+
 // currently owned
 var stone = 0.0;
 var wood = 50.0;
@@ -13,94 +18,199 @@ var foodProduction = 5.0;
 var stoneProduction = 0.5;
 var woodProduction = 1.0;
 
-// seconds to one year
-var yearsPerSecond = .5;
+// seconds to one year TODO
+var secondsPerYear = 8;
+var gameYear = 0.0;
+var speeds = [{name:"x.5", speed: 16}, {name:"x1", speed: 8}, {name:"x2", speed: 4}, {name:"x4", speed: 2}, {name:"x8", speed: 1}];
+var speedIndex = 1;
 
-// food eaten per person per second
+// food eaten per person per year
 var foodConsumption = 0.5;
 
-var burnDamage = 4;
+// burning
+var burnDamage = 50;
 var burnStopChance = 0.3; // chances of a burning building to stop burning 0 - no chance, 1 - 100% chance
 var buildingRegenRate = 0.5;
 
+// people
+var personHealth = 100.0;
+var personSpeed = 320.0; // pixels traveled in a year
+var personSpeedRandom = 100; // +/- from the personSpeed
+var personBurnDamage = 100; // per year
+var personLove = 5; // chance to fall in love % increase every year.
+
+// images
 var ss;
-var testImage;
 var backgroundImage;
 //var imageMultiplier = 1; // make images bigger
 
-var personCounter = 0;
-
+// game boolean => used to pause and resume game
 var running = true;
 
+// changes the display
 var debugMode;
-var debugKey = 192;
+var debugKey = 192; // ascii code for `
+
+// TODO: https://www.1001fonts.com/dpcomic-font.html
+var font;
+
+// hud
+var hudHeight = 64;
+
+var screenManager;
+
+class Sprite {
+	constructor(x, y, w, h){
+		this.x = x;
+		this.y = y;
+		this.w = w;
+		this.h = h;
+	}
+
+	drawSprite(x, y, w, h){
+		image(ss, x, y, w, h, this.x, this.y, this.w, this.h);
+	}
+
+	getX(){
+		return this.x;
+	}
+
+	getY(){
+		return this.y;
+	}
+
+	getWidth(){
+		return this.w;
+	}
+
+	getHeight(){
+		return this.h;
+	}
+
+}
+
+const SPRITES = {
+	GRASS_BLOCK: new Sprite(0, 0, 32, 32),
+	WOODEN_HOUSE: new Sprite(32, 0, 32, 32),
+	FORREST: new Sprite(64, 0, 32, 32),
+	FARM: new Sprite(96, 0, 32, 32),
+	QUARRY: new Sprite(128, 0, 32, 32),
+	STONE_HOUSE: new Sprite(160, 0, 32, 32),
+	GRASS: new Sprite(192, 0, 32, 32),
+	BUILDING_FIRE: new Sprite(224, 0, 32, 32),
+	LIGHTNING_RIGHT: new Sprite(32, 32, 16, 32),
+	LIGHTNING_LEFT: new Sprite(48, 32, 15, 31), // check values
+	// power effects
+	LIGHTNING_POWER_ACTIVE: new Sprite(64, 32, 32, 32),
+	LIGHTNING_POWER_UNACTIVE: new Sprite(96, 32, 32, 32),
+	SUN_POWER_ACTIVE: new Sprite(128, 32, 32, 32),
+	SUN_POWER_UNACTIVE: new Sprite(160, 32, 32, 32),
+	SPAWN_POWER_ACTIVE: new Sprite(192, 32, 32, 32),
+	SPAWN_POWER_UNACTIVE: new Sprite(224, 32, 32, 32),
+	// character models
+	CHAR1_MALE: new Sprite(0, 64, 16, 32),
+	CHAR1_FEMALE: new Sprite(16, 64, 16, 32),
+	CHAR1_MALE_FIRE: new Sprite(32, 64, 16, 32),
+	CHAR1_FEMALE_FIRE: new Sprite(48, 64, 16, 32),
+	CHAR2_MALE: new Sprite(0, 96, 16, 32),
+	CHAR2_FEMALE: new Sprite(16, 96, 16, 32),
+	CHAR2_MALE_FIRE: new Sprite(32, 96, 16, 32),
+	CHAR2_FEMALE_FIRE: new Sprite(48, 96, 16, 32),
+	// other
+	PAUSE: new Sprite(288, 0, 24, 24),
+	RESUME: new Sprite(288, 24, 24, 24),
+	HELP: new Sprite(256, 0, 32, 32),
+}
+
+function preload(){
+	// https://ff.static.1001fonts.net/d/p/dpcomic.regular.ttf
+	font = loadFont("fonts/dpcomic.ttf");
+	ss = loadImage("images/ss.png");
+	backgroundImage = loadImage("https://i.imgur.com/bLxcjh3.jpg");
+}
 
 function setup() {
 	debugMode = false;
-	// setup canvas
-	canvas = createCanvas(640, 320);
 
+	// setup canvas
+	canvas = createCanvas(640, 320+hudHeight);
+
+	var worldWidth = 20;
+
+	buildings = [];
+	people = [new Person(width/2, 0, 0), new Person(width/2, 0, 1)];
+	godPowers = [new Lightning(), new Sun(), new SpawnPerson()];
+	for (var q = 0; q < worldWidth; q++){
+		buildings[q] = new Building();
+	}
+	
+	// setup screens
+	screenManager = new SketchScreenManager();
+	screenManager.addScreen(new HUD());
+	screenManager.addScreen(new GlobalInfo());
+	screenManager.addScreen(new Tutorial1());
+	screenManager.addScreen(new Tutorial2());
+	screenManager.addScreen(new Tutorial3());
+	screenManager.addScreen(new Tutorial4());
+
+	//Tutorial1
+	//Tutorial1
 	// only recieve mouse input when clicked on canvas
 	canvas.mousePressed(onMousePressed);
-	//canvas.keyReleased(onKeyReleased);
-	
 
 	// assign canvas to html div
 	canvas.parent("canvas-holder");
 
-	ss = loadImage("https://i.imgur.com/J7OFhRA.png");
-	testImage = loadImage("https://i.imgur.com/Kfjvz9f.jpg");
-	backgroundImage = loadImage("https://i.imgur.com/bLxcjh3.jpg");
-
 	setFrameRate(32);
-
-	setUpWorld(20);
 }
 
-function keyReleased(){
-	console.log(keyCode);	
+/**
+ * called when the a key is realesed
+ */
+function keyReleased(){	
+	//console.log(keyCode);
 	if (keyCode==debugKey){
 		debugMode = !debugMode;
 		console.log("debug mode: " + debugMode);
 	}
+	screenManager.onKeyReleased();
 }
 
+/**
+ * draw from p5js
+ */
 function draw() {
-	if (running){
-		image(backgroundImage, 0, 0, width, height);
-		fill(255, 90);
-		rect(0, 0, width, height);
-		//console.log(getFrameRate());
-		builderAI();
-		for (var q = 0; q < buildings.length; q++){
-			image(ss,q*blockSize,height-blockSize,blockSize,blockSize,0,0,31,32);
-			buildings[q].draw(q*blockSize);
-			buildings[q].update();
-		}
-		for (var q = 0; q < people.length; q++){
-			people[q].draw();
-			people[q].update();
-		}
-		// HUD
-		textSize(12);
-		fill(255);
-		noStroke();
-		text("Population: " + parseInt(getPopulation()), width-100, 16);
-		text("Wood: " + parseInt(wood), width-100, 16*2);
-		text("Stone: " + parseInt(stone), width-100, 16*3);
-		text("Food: " + parseInt(food), width-100, 16*4);
-		
-		if (debugMode){
-			text("needFarms:"+needFarms()+",needHouses:"+needHouses()
-				+",needForrest:"+needForrests()+",needQuarries:"+needQuarries(), 20, 32);
-
-			var occ = "";
-			for (var q = 0; q < people.length; q++){
-				occ += people[q].getOccupation()+",";
-			}
-			text("occupations:"+occ, 20, 48);
-		}
+	textFont(font);
+	if (running && getFrameRate() != 0 && secondsPerYear != 0){
+		gameYear += 1/(getFrameRate()*secondsPerYear);
 	}
+	//background(255);
+	//new Sprite(0, 32, 32, 32).drawSprite(0, 0, 640, 320);
+	///*
+	image(backgroundImage, 0, 0, width, getGameHeight());
+	fill(99,83,32);
+	noStroke();
+	rect(0, getGameHeight(), width, hudHeight);
+	//console.log(getFrameRate());
+	builderAI();
+	for (var q = 0; q < buildings.length; q++){
+		// draw grass below building
+		SPRITES.GRASS_BLOCK.drawSprite(q*blockSize, getGameHeight()-blockSize, blockSize, blockSize);
+		buildings[q].draw(q*blockSize);
+		if (running)
+			buildings[q].update();
+	}
+	for (var q = 0; q < people.length; q++){
+		people[q].draw();
+		if (running)
+			people[q].update();
+	}
+	for (var q = 0; q < godPowers.length; q++){
+		godPowers[q].draw();
+		godPowers[q].update();
+	}
+	screenManager.draw();
+	//*/
 }
 
 function pause(){
@@ -111,65 +221,106 @@ function resume(){
 	running = true;
 }
 
-function setUpWorld(worldWidth){
-	buildings = [];
-	people = [new Person(32.0, 16, 0), new Person(64.0, 16, 1)];
-	for (var q = 0; q < worldWidth; q++){
-		buildings[q] = new Building();
+function onMousePressed() {
+	for (var q = 0; q < godPowers.length; q++){
+		if (godPowers[q].isActive() && mouseY < getGameHeight())
+			godPowers[q].mouseClicked();
 	}
+	screenManager.onMouseReleased();
 }
 
-function onMousePressed() {}
-
+/**
+ * @returns true needFarmers() returns false and needFoodProduction returns true.
+ */
 function needFarms(){
 	return !needFarmers() && needFoodProduction();
 }
 
+/**
+ * @returns true if there are more farms then there are farmers.
+ */
 function needFarmers(){
-	return getBuildingsByType(3) - getPeopleByOccupation(1) > 0;
+	return getUseableBuildingsByType(BUILDING_TYPE.FARM) > getPeopleByOccupation(OCCUPATION.FARMER);
 }
 
+/**
+ * @returns true if getTotalFoodProduction() is less than getTotalFoodConsumption() * 1.5.
+ */
 function needFoodProduction(){
-	return getTotalFoodProduction()-getTotalFoodConsumption()*1.5 < 0;
+	return getTotalFoodProduction() < getTotalFoodConsumption()*1.5;
 }
 
+/**
+ * @returns true if getPopulation() is greater than getTotalHousingSpace().
+ */
 function needHouses(){
-	return getPopulation() - getTotalHousingSpace() > 0;
+	return getPopulation() > getTotalHousingSpace() || 
+			(getBuildingsByType(BUILDING_TYPE.STONE_HOUSE) == 0 && 
+			getBuildingsByType(BUILDING_TYPE.WOODEN_HOUSE) == 0);
 }
 
+/**
+ * @returns true if needForrestWorkers() is false and there is not a forrest for every 10 people.
+ * TODO: this is currently designed to have a forrest every 10 people.
+ */
 function needForrests(){
-	// only make a forrest for every 10 people
 	return !needForrestWorkers() && getPopulation()/10 >= getForrests();
 }
 
+/**
+ * @returns true if there are more forrests than forrest workers.
+ */
 function needForrestWorkers(){
-	return getBuildingsByType(6) - getPeopleByOccupation(3) > 0;
+	return getUseableBuildingsByType(BUILDING_TYPE.FORREST) > getPeopleByOccupation(OCCUPATION.FORREST_WORKER);
 }
 
+/**
+ * @returns true if needQuarryWorkers() is false and there is not a quarry for every 15 people.
+ * TODO: this is currently designed to have a quarry every 15 people.
+ */
 function needQuarries(){
 	return !needQuarryWorkers() && getPopulation()/15 >= getQuarries();
 }
 
+/**
+ * @returns true if there are more quarries than there are quarry workers.
+ */
 function needQuarryWorkers(){
-	return getBuildingsByType(5) - getPeopleByOccupation(2) > 0;
+	return getUseableBuildingsByType(BUILDING_TYPE.QUARRY) > getPeopleByOccupation(OCCUPATION.QUARRY_WORKER);
 }
 
+/**
+ * @returns people.length
+ */
 function getPopulation(){
 	return people.length;
 }
 
+/**
+ * @returns the number of farms.
+ */
 function getFarms(){
-	return getBuidlingsByType(3);
+	return getBuidlingsByType(BUILDING_TYPE.FARM);
 }
 
+/**
+ * @returns the number of forrests.
+ */
 function getForrests(){
-	return getBuildingsByType(6);
+	return getBuildingsByType(BUILDING_TYPE.FORREST);
 }
 
+/**
+ * @returns the number of quarries.
+ */
 function getQuarries(){
-	return getBuildingsByType(5);
+	return getBuildingsByType(BUILDING_TYPE.QUARRY);
 }
 
+/**
+ * @returns the sum of buildings that match the building type.
+ * @param {Object} bType the BUILDING_TYPE value for which building it is.
+ */
 function getBuildingsByType(bType){
 	var sum = 0;
 	for (var q = 0; q < buildings.length; q++){
@@ -180,6 +331,45 @@ function getBuildingsByType(bType){
 	return sum;
 }
 
+/**
+ * @returns the sum of the buildings that match the building type
+ * @param {Object} bType the BUILDING_TYPE value for which building it is.
+ */
+function getUseableBuildingsByType(bType){
+	var sum = 0;
+	for (var q = 0; q < buildings.length; q++){
+		if (buildings[q].getType()==bType && buildings[q].isUseable()){
+			sum++;
+		}
+	}
+	return sum;
+}
+
+function toggleSpeed(){
+	speedIndex++;
+	if (speedIndex >= speeds.length)
+		speedIndex = 0;
+	secondsPerYear = speeds[speedIndex].speed;
+}
+
+/**
+ * @returns the sum of the buildings that do not match the building type.
+ * @param {Object} bType the BUILDING_TYPE value for which building it is not.
+ */
+function getBuildingsNotByType(bType){
+	var sum = 0;
+	for (var q = 0; q < buildings.length; q++){
+		if (buildings[q].getType()!=bType){
+			sum++;
+		}
+	}
+	return sum;
+}
+
+/**
+ * @returns the sum of the people that match that occupation.
+ * @param {Object} occ the OCCUPAITON value for the person.
+ */
 function getPeopleByOccupation(occ){
 	var sum = 0;
 	for (var q = 0; q < people.length; q++){
@@ -190,6 +380,9 @@ function getPeopleByOccupation(occ){
 	return sum;
 }
 
+/**
+ * @returns the sum of the buildings housing space.
+ */
 function getTotalHousingSpace(){
 	var sum = 0;
 	for (var q = 0; q < buildings.length; q++){
@@ -198,89 +391,132 @@ function getTotalHousingSpace(){
 	return sum;
 }
 
+/**
+ * @returns the potential total food production if every farm is being used.
+ */
 function getTotalFoodProduction(){
 	var sum = 0;
 	for (var q = 0; q < buildings.length; q++){
-		if (buildings[q].getType()==3){
+		if (buildings[q].getType()==BUILDING_TYPE.FARM){
 			sum+=buildings[q].getHousingSpace()*foodProduction;
 		}
 	}
 	return sum;
 }
 
+/**
+ * @returns the current total food production of the farms being used.
+ */
+function getCurrentFoodProduction(){
+	var sum = 0;
+	for (var q = 0; q < buildings.length; q++){
+		if (buildings[q].getType()==BUILDING_TYPE.FARM){
+			sum+=buildings[q].getInhabitants()*foodProduction;
+		}
+	}
+	return sum;
+}
+
+/**
+ * @returns the total food consumption of the town as whole per second.
+ */
 function getTotalFoodConsumption(){
 	return people.length*foodConsumption;
 }
 
+/**
+ * kills a random person.
+ */
 function randomDeath(){
 	var index = Math.random()*people.length;
 	console.log(index);
 	people[parseInt(index)].die("testing");
 }
 
+/**
+ * @returns a random index in buildings that is empty. -1 if there are no empty slots.
+ */
 function getOpenLand(){
-	if (getBuildingsByType(0) == 0)
+	if (getBuildingsByType(BUILDING_TYPE.EMPTY) == 0)
 		return -1;
 	var index = -1;
 	do {
 		index = Math.random()*buildings.length;
-	} while (buildings[parseInt(index)].getType() != 0);
+	} while (buildings[parseInt(index)].getType() != BUILDING_TYPE.EMPTY);
 	return parseInt(index);
 }
 
+/**
+ * checks to see if any buildings can be built priortizing forrest => farms => houses => quarry
+ */
 function builderAI(){
 	// have empty spots
-	if (getBuildingsByType(0) == 0)
+	if (getBuildingsByType(BUILDING_TYPE.EMPTY) == 0)
 		return;
 	
-	if (needFarms()){
-		if (canBuild(FARM)){
-			buildBuilding(FARM, getOpenLand());
-			console.log("Building farm...");
-		}
-	}
-	else if (needHouses()){
-		if (canBuild(STONE_HOUSE)){
-			buildBuilding(STONE_HOUSE, getOpenLand());
-			console.log("Building stone house...");
-		} 
-		else if (canBuild(WOODEN_HOUSE)) {
-			buildBuilding(WOODEN_HOUSE, getOpenLand());
-			console.log("Building wooden house...");
-		}
-	}
-	else if (needForrests()){
-		if (canBuild(FORREST)){
-			buildBuilding(FORREST, getOpenLand());
+	if (needForrests()){
+		if (canBuild(BUILDING_TYPE.FORREST)){
+			buildBuilding(BUILDING_TYPE.FORREST, getOpenLand());
 			console.log("Building forrest...");
 		}
 	}
+	else if (needHouses()){
+		if (canBuild(BUILDING_TYPE.STONE_HOUSE)){
+			buildBuilding(BUILDING_TYPE.STONE_HOUSE, getOpenLand());
+			console.log("Building stone house...");
+		} 
+		else if (canBuild(BUILDING_TYPE.WOODEN_HOUSE)) {
+			buildBuilding(BUILDING_TYPE.WOODEN_HOUSE, getOpenLand());
+			console.log("Building wooden house...");
+		}
+	}
+	else if (needFarms()){
+		if (canBuild(BUILDING_TYPE.FARM)){
+			buildBuilding(BUILDING_TYPE.FARM, getOpenLand());
+			console.log("Building farm...");
+		} else {
+			console.log("cannot build");
+		}
+	}
 	else if (needQuarries()){
-		if (canBuild(QUARRY)){
-			buildBuilding(QUARRY, getOpenLand());
+		if (canBuild(BUILDING_TYPE.QUARRY)){
+			buildBuilding(BUILDING_TYPE.QUARRY, getOpenLand());
 			console.log("Building quarries...");
 		}
 	}
 }
 
-function buildBuilding(building, index){
+/**
+ * @returns true if building it was successful, false otherwise.
+ * @param {Object} bType the BUILDING_TYPE for which the building should be.
+ * @param {number} index place in buildings array.
+ */
+function buildBuilding(bType, index){
 	// make sure they have the required resources
-	if (!canBuild(building))
+	if (!canBuild(bType))
 		return false;
 	// remove resources
-	stone -= building.stone;
-	wood -= building.wood;
+	stone -= bType.stoneCost;
+	wood -= bType.woodCost;
 	// set the building
-	buildings[index].resetType(building.bType);
+	buildings[index].resetType(bType);
 	return true;
 }
 
-function canBuild(building){
-	if (building.wood>wood || building.stone>stone)
+/**
+ * @returns true if that building can be built now, false otherwise.
+ * @param {Object} bType the BUILDING_TYPE for which building should be checked. 
+ */
+function canBuild(bType){
+	if (bType.woodCost>wood || bType.stoneCost>stone)
 		return false;
 	return true;
 }
 
+/**
+ * @returns Person object that matches that id, null if no person matches that id.
+ * @param {number} id id of person.
+ */
 function getPersonByID(id){
 	for (var q = 0; q < people.length; q++){
 		if (people[q].getID()==id){
@@ -290,20 +526,103 @@ function getPersonByID(id){
 	return null;
 }
 
-function openSpaceInHouses(){
-	var sum = 0;
-	for (var q = 0; q < buildings.length; q++){
-		sum += buildings[q].getHousingSpace()-buildings[q].getInhabitants();
+/**
+ * sets a building on fire and kicks out all the occupants setting them on fire.
+ * @param {number} index index in buildings array.
+ */
+function burnBuilding(index){
+	// check to see if building can burn
+	var build = buildings[index];
+	// set building on fire
+	if (!build.canBurn())
+		return;
+	build.setBurning(true);
+	// kick out all the people and set them on fire.
+	for (var q = 0; q < people.length; q++){
+		var person = people[q];
+		if (person.isInBuilding() && person.getBuilding() == index){
+			person.setBurning(true);
+			person.newObjective();
+			build.removePerson();
+		}
 	}
-	return sum;
 }
 
-function findClosestBuilding(x, buildingSearch){
+/**
+ * causes an explosion that damages and set building on fire
+ * @param {number} x the x position of the explosion
+ * @param {number} radius the radius of the explosion
+ * @param {number} max the maximum damage at the center
+ * @param {number} min the minimum damage at the edge or perimeter
+ * @param {string} reason if a person dies the this then this reason will be displayed
+ */
+function explosion(x, radius, max, min = 0, reason = "explosion"){
+	if (min>max)
+		return;
+	var x1 = x-radius;
+	var x2 = x+radius;
+	var damageDiff = max-min;
+	// buildings
+	for (var q = 0; q < buildings.length; q++){
+		var center = q*blockSize+blockSize/2;
+		if (center > x1 && center < x2){
+			var distance = Math.abs(center-x);
+			var damage = damageDiff*(1-(distance/radius))+min;
+			burnBuilding(q);
+			buildings[q].takeDamage(damage);
+		}
+	}
+	// people
+	for (var q = 0; q < people.length; q++){
+		var center = people[q].getX();
+		if (center > x1 && center < x2){
+			var distance = Math.abs(center-x);
+			var damage = damageDiff*(1-(distance/radius))+min;
+			people[q].setBurning(true);
+			people[q].takeDamage(damage, reason);
+		}
+	}
+}
+
+/**
+ * @returns the god power that matches the class otherwise null.
+ * @param {class} power class of the god power.
+ */
+function getGodPower(power){
+	for (var q = 0; q < godPowers.length; q++){
+		if (godPowers[q].constructor.name == power){
+			return godPowers[q];
+		}
+	}
+	return null;
+}
+
+/**
+ * @returns True if there is enough empty space in at least one house.
+ * @param {number} space the number of space needed in a house.
+ */
+function openSpaceInHouse(space){
+	for (var q = 0; q < buildings.length; q++){
+		if ((buildings[q].getType()==BUILDING_TYPE.STONE_HOUSE || 
+				buildings[q].getType()==BUILDING_TYPE.WOODEN_HOUSE) 
+				&& buildings[q].getEmptySpace() >= space)
+			return true;
+	}
+	return false;
+}
+
+/**
+ * @returns the index of the closest building that matches the BUILDING_TYPE, -1 if none can be found
+ * @param {*} x position to find the closest building to.
+ * @param {*} bType the BUILDING_TYPE looking for.
+ * @param {number} space the number of space need in the closest building.
+ */
+function findClosestBuilding(x, bType, space = 1){
 	var index = -1;
 	var distance = -1;
 	// find closest building
 	for (var q = 0; q < buildings.length; q++){
-		if ((Math.abs((q*blockSize)+(blockSize/2)-x)<distance || distance<0) && buildings[q].getType() == buildingSearch && !buildings[q].isFull()){
+		if ((Math.abs((q*blockSize)+(blockSize/2)-x)<distance || distance<0) && buildings[q].getType() == bType && buildings[q].getEmptySpace() >= space && buildings[q].isUseable()){
 			index = q;
 			distance = Math.abs((q*blockSize)+(blockSize/2)-x);
 		}
@@ -311,471 +630,26 @@ function findClosestBuilding(x, buildingSearch){
 	return index;
 }
 
-function Person(x = 32, age = 0, sex = -1){
-	// head info
-	this.x = x;
-	this.pWidth = 16;
-	this.age = age;
-	this.id = personCounter;
-	personCounter++;
-	this.picID = parseInt(Math.random()*2);
-
-	/*
-	0: Boy
-	1: Girl
-	*/
-	if (sex!=1 && sex!=0){
-		// https://stackoverflow.com/questions/45136711/javascript-random-generate-0-or-1-integer
-		this.sex = Math.round(Math.random());
-	} else {
-		this.sex = sex;
-	}
-
-	if (this.sex == 0)
-		this.fname = getRandomMaleName();
-	else
-		this.fname = getRandomFemaleName();
-
-	console.log("<New Person> id:"+this.id + ", sex:" + this.sex+", x:"+this.x);
-
-	// behind the scenes
-	this.hunger = 0.0;
-	this.love = 0.0;
-	this.lookingForLove = false;
-	this.loveCheck = 0;
-	this.lover = -1;
-	/*
-	0: Unemployed
-	1: Farmer
-	2: Quarry Worker
-	3: Forrest Worker
-	*/
-	this.occupation = 0;
-	this.speed = 32.0+((Math.random()*7.0)-3.0); // 32 +/- 3
-
-	/*
-	Objective Types & data:
-	0: roam | x
-	1: go to building | building x
-	2: continue work
-	*/
-	this.objectiveType;
-	this.objective; // used as data for the objective
-
-	this.inBuilding = false;
-	this.building = 0; // index in array
-
-	this.draw = function(){
-		if (!this.inBuilding || debugMode){
-			noFill();
-			stroke(30, 30, 90);
-			//rect(this.x, height-blockSize-32, 16, 32);
-			image(ss,this.x,height-blockSize-blockSize,blockSize/2,blockSize,this.sex*16,this.picID*32+64,16,32);
+/**
+ * @returns the number of the people with this sex.
+ * @param {*} sex the sex to check for use SEX.MALE or SEX.FEMALE
+ */
+function getPopulationBySex(sex){
+	var sum = 0;
+	for (var q = 0; q < people.length; q++){
+		if (people[q].getSex()==sex){
+			sum++;
 		}
 	}
-
-	this.update = function(){
-		if (getFrameRate() == 0)
-			return;
-		// perform objective
-		switch (this.objectiveType){
-			case 0: // roam
-				// check if they have reached roaming point
-				if (this.x < this.objective && this.x+this.pWidth > this.objective){
-					this.newObjective();
-				}
-				// to the left of objective go right
-				if (this.x < this.objective){
-					this.x += (this.speed/getFrameRate());
-				}
-				// to the right of objective go left
-				else if (this.x > this.objective){
-					this.x -= (this.speed/getFrameRate());
-				}
-				break;
-			case 1: // go into to building
-				// check if at building door
-				if (this.x > blockSize*(this.objective) && this.x+this.pWidth < blockSize*(this.objective+1)){
-					if (!buildings[this.objective].isFull()){
-						buildings[this.objective].addPerson();
-						this.inBuilding = true;
-						this.building = this.objective;
-						this.objectiveType = 2;
-					} 
-					// building they wanted to go to is full or destroyed find a new objective
-					else {
-						this.newObjective();
-					}
-				}
-				// to the left and needs to go right
-				else if (this.x+this.pWidth < blockSize*(this.objective+1)){
-					this.x += (this.speed/getFrameRate());
-				}
-				// to the right and needs to go left
-				else if (this.x > blockSize*this.objective){
-					this.x -= (this.speed/getFrameRate());
-				} 
-				break;
-			case 2:
-				// building destroyed
-				if (buildings[this.building].getType()==0){
-					this.inBuilding = false;
-					this.newObjective();
-				}
-				// lover died :(
-				if (this.lover!=-1 && getPersonByID(this.lover)==null){
-					this.lover = -1;
-				}
-				// lover in house
-				if (this.lover != -1 && getPersonByID(this.lover).isInBuilding() && getPersonByID(this.lover).getBuilding() == this.building){
-					people[people.length] = new Person(this.x);
-					getPersonByID(this.lover).resetLove();
-					getPersonByID(this.lover).newObjective();
-					this.resetLove();
-					this.newObjective();
-				}
-				break;
-			default:
-				this.newObjective();
-				break;
-		}
-		// food consumption
-		if (food>1){
-			food -= foodConsumption/getFrameRate();
-			if (this.hunger>0){
-				this.hunger -= 1/getFrameRate();
-				if (this.hunger < 0){
-					this.hunger = 0;
-				}
-			}
-		} else {
-			this.hunger += 1/getFrameRate();
-		}
-		// starvation
-		if (this.hunger>=20){
-			this.die("starvation");
-		}
-
-		// age
-		this.age += yearsPerSecond/getFrameRate();
-
-		// die of old age
-		if (this.age>=80){
-			this.die("old age");
-		}
-
-		if (!this.lookingForLove && this.lover==-1){
-			// love
-			// 0-5% chance increase in love
-			this.love += (Math.random()*5)/getFrameRate();
-			// 40% chance potentially fall in love + also have love% chance - only checks once per second
-			if (this.loveCheck>getFrameRate()){
-				this.loveCheck=0;
-				if (Math.random()<.4 && Math.random()*100 < this.love){
-					this.lookingForLove = true;
-					console.log("<Looking For Love> "+this.fname+"("+this.id+") is now looking for love");
-				}
-			} else {
-				this.loveCheck++;
-			}
-		}
-		// find mate
-		if (this.lover==-1 && openSpaceInHouses() && this.lookingForLove && (findClosestBuilding(this.x, 1)!=-1 || findClosestBuilding(this.x, 2)!=-1)){
-			if (this.findLove()){
-				var index = -1;
-				index = findClosestBuilding(this.x, 1);
-				if (index==-1)
-					index = findClosestBuilding(this.x, 2);
-				getPersonByID(this.lover).goToBuilding(index);
-				this.goToBuilding(index);
-			}
-		}
-	}
-
-	this.leaveBuilding = function(){
-		if (this.inBuilding){
-			this.inBuilding = false;
-			buildings[this.building].removePerson();
-		}
-	}
-
-	this.resetLove = function(){
-		this.love = 0;
-		this.loveCheck = 0;
-		this.lookingForLove = false;
-		this.lover = -1;
-	}
-
-	this.newObjective = function(){
-		this.leaveBuilding();
-		var buildingSearch = 0;
-		this.occupation = 0;
-		if (needFarmers()){
-			console.log(getPeopleByOccupation(1));
-			this.occupation = 1;
-			buildingSearch = 3;
-		}
-		else if (needForrestWorkers()){
-			this.occupation = 3;
-			buildingSearch = 6;
-		}
-		else if (needQuarryWorkers()){
-			this.occupation = 2;
-			buildingSearch = 5;
-		}
-		// unemployed
-		else {
-			this.occupation = 0;
-		}
-		
-		// go to building to work
-		if (buildings.length>1 && this.occupation != 0){
-			this.objectiveType = 1;
-			this.objective = findClosestBuilding(this.x, buildingSearch);
-		}
-		// roaming
-		else {
-			this.objectiveType = 0;
-			this.objective = Math.random()*(blockSize*buildings.length);
-		}
-
-	}
-
-	this.findLove = function(){
-		for (var q = 0; q < people.length; q++){
-			if (people[q].getSex()!=this.sex && people[q].isLookingForLove() && this.id != people[q].getID()){
-				this.lover = people[q].getID();
-				this.lookingForLove = false;
-				getPersonByID(this.lover).fallInLove(this.id);
-				return true;
-			}
-		}
-		return false;
-	}
-
-	this.getFName = function(){
-		return this.fname;
-	}
-
-	this.getSex = function(){
-		return this.sex;
-	}
-
-	this.getOccupation = function(){
-		return this.occupation;
-	}
-
-	this.isLookingForLove = function(){
-		return this.lookingForLove;
-	}
-
-	this.getID = function(){
-		return this.id;
-	}
-
-	this.isInBuilding = function(){
-		return this.inBuilding;
-	}
-
-	this.getBuilding = function(){
-		return this.building;
-	}
-
-	this.die = function(reason){
-		if (this.inBuilding){
-			buildings[this.building].removePerson();
-		}
-		console.log(this.fname+" died at the age of " + parseInt(this.age) + " from " + reason);
-		var index = -1;
-		for (var q = 0; q < people.length; q++){
-			if (people[q].getID() == this.id){
-				index = q;
-				break;
-			}
-		}
-		people.splice(index, 1);
-	}
-
-	// called when someone else has decided to be this persons lover
-	this.fallInLove = function(id){
-		if (this.lookingForLove){
-			console.log("<Love> "+this.fname+"("+this.id+") has fallen in love with "+getPersonByID(id).getFName()+"("+id+")");
-			this.lookingForLove = false;
-			this.lover = id;
-		}
-	}
-
-	this.goToBuilding = function(index){
-		this.occupation = 0;
-		this.leaveBuilding();
-		this.objectiveType = 1;
-		this.objective = index;
-	}
+	return sum;
 }
 
-var WOODEN_HOUSE = {bType:1, wood:15, stone:0};
-var STONE_HOUSE = {bType:2, wood:5, stone:15};
-var FARM = {bType:3, wood:3, stone:0};
-var TEMPLE = {bType:4, wood:10, stone:40};
-var QUARRY = {bType:5, wood:25, stone:0};
-var FORREST = {bType:6, wood:0, stone:0};
-
-function Building(bType = 0, burning = false){
-	/*
-	Types:
-	0: Empty
-	1: Wodden House -> reproduce
-	2: Stone House -> reproduce
-	3: Farm -> gain food
-	4: Temple -> idk
-	5: Quarry -> gain stone
-	6: Forrest -> gain wood
-	*/
-	this.bType = bType;
-	this.burning = burning;
-
-	this.canBurn = false;
-	this.hp = 0.0;
-	this.maxHP = 1.0;
-	this.housingSpace = 0;
-	this.inhabitants = 0; // people in building
-	this.ssX = 6;
-	this.ssY = 0;
-
-	this.initType = function(){
-		switch (this.bType){
-			case 0: // empty
-				break;
-			case 1: // wooden house
-				this.ssX = 1;
-				this.ssY = 0;
-				this.canBurn = true;
-				this.hp = 25.0;
-				this.maxHP = 25.0;
-				this.housingSpace = 3;
-				break;
-			case 2: // stone house
-				this.ssX = 5;
-				this.ssY = 0;
-				this.hp = 50.0;
-				this.maxHP = 50.0;
-				this.housingSpace = 15;
-				break;
-			case 3: // farm
-				this.ssX = 3;
-				this.ssY = 0;
-				this.canBurn = true;
-				this.hp = 10.0;
-				this.maxHP = 10.0;
-				this.housingSpace = 1;
-				break;
-			case 4: // temple
-				this.canBurn = true;
-				this.hp = 30.0;
-				this.maxHP = 30.0;
-				break;
-			case 5: // quarry
-				this.ssX = 4;
-				this.ssY = 0;
-				this.hp = 15.0;
-				this.maxHP = 15.0;
-				this.housingSpace = 1;
-				break;
-			case 6: // forrest
-				this.ssX = 2;
-				this.ssY = 0;
-				this.canBurn = true;
-				this.hp = 15.0;
-				this.maxHP = 15.0;
-				this.housingSpace = 1;
-				break;
-		}
-	}
-
-	this.initType();
-
-	this.draw = function(x){
-		// https://github.com/processing/p5.js/issues/1567
-		fill(128, 128, 128, 128);
-		stroke(2);
-		// the +1 and having the width of 30 is because p5.js is stoopid
-		image(ss,x,height-blockSize*2,blockSize,blockSize,this.ssX*32+1,this.ssY*32,30,32);
-	}
-
-	// called 60 times a second with draw
-	this.update = function(){
-		if (getFrameRate() == 0)
-			return;
-		// building on fire
-		if (this.burning && this.canBurn){
-			this.hp -= (this.burnDamage/getFrameRate());
-		} 
-		else if (this.hp<this.maxHP){
-			this.hp += (this.buildingRegenRate/getFrameRate());
-		}
-		// if building destroyed
-		if (this.hp < 0){
-			this.remove();
-		}
-		// do not let the building go over max
-		if (this.hp > this.maxHP){
-			this.hp = this.maxHP;
-		}
-		// production
-		switch (this.bType){
-			case 3:
-				food += (foodProduction*this.inhabitants)/getFrameRate();
-				break;
-			case 5:
-				stone += (stoneProduction*this.inhabitants)/getFrameRate();
-				break;
-			case 6:
-				wood += (woodProduction*this.inhabitants)/getFrameRate();
-				break;
-		}
-	}
-
-	// reset to 0 or empty
-	this.destroy = function(){
-		this.resetType(0);
-	}
-
-	this.resetType = function(bType){
-		this.bType = bType;
-		this.initType();
-	}
-
-	this.isFull = function(){
-		return this.inhabitants >= this.housingSpace;
-	}
-
-	this.getInhabitants = function(){
-		return this.inhabitants;
-	}
-
-	this.getHousingSpace = function(){
-		return this.housingSpace;
-	}
-
-	this.removePerson = function(){
-		this.inhabitants--;
-	}
-
-	this.addPerson = function(){
-		this.inhabitants++;
-	}
-
-	this.getType = function(){
-		return this.bType;
-	}
-
+/**
+ * @returns the height of the game excluding the hud at the bottom.
+ */
+function getGameHeight(){
+	return height-hudHeight;
 }
 
-/*
-god powers:
-lightning
-disease
-meteor
-*/
-
-
+// html:
+// https://p5js.org/examples/dom-input-and-button.html

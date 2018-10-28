@@ -1,9 +1,11 @@
+
+// https://stackoverflow.com/questions/4550505/getting-a-random-value-from-a-javascript-array
 function getRandomMaleName(){
-    return maleNames[parseInt(Math.random()*maleNames.length)];
+    return maleNames[parseInt(Math.floor(Math.random()*maleNames.length))];
 }
 
 function getRandomFemaleName(){
-    return femaleNames[parseInt(Math.random()*femaleNames.length)];
+    return femaleNames[parseInt(Math.floor(Math.random()*femaleNames.length))];
 }
 
 var maleNames = [
