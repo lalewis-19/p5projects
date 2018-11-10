@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>p5 Game project</title>
     <link rel="stylesheet" href="style.css">
-    <style> body {padding: 0; margin: 0;} </style>
     <script src="../p5.min.js"></script>
     <script src="../addons/p5.dom.min.js"></script>
     <script src="../addons/p5.sound.min.js"></script>
@@ -13,14 +12,91 @@
     <script src="data.js"></script>
     <script src="Building.js"></script>
     <script src="Person.js"></script>
-    <script src="GodPower.js"></script>
-    <script src="screen.js"></script>
+    <script src="Weather.js"></script>
   </head>
   <body>
-    <div id="main">
-      <div id="main-content">
-        <div id="canvas-holder">
-          <!-- canvas goes here -->
+    <div id="screen">
+      <div id="main-holder">
+        <div id="main">
+          <div id="top-content">
+            <div id="canvas-holder">
+              <!-- canvas goes here -->
+            </div>
+            <div id="popup-info">
+              <div id="popup-tutorial" class="popups">
+                <h1>Tutorial</h1>
+                <hr>
+                <p>Welcome to Peasant Village! In this game you control a small village of peasants
+                  tasked with helping them survive whatever may come their way.
+                </p>
+                <h2>Weather</h2>
+                <p>Each year will have a different type of weather, the weather will affect 
+                  different game aspects. Rain tends to increase the yield from food harvests, 
+                  but look out for lightning! Snowing in most cases will completely stop all food 
+                  produciton and in some cases increase the food conumption.</p>
+                <h2>Resources</h2>
+                <p>There are three main types of resources: food, wood, and stone. Food is 
+                  constantly consumed by your peasants every year, the more people you have the 
+                  more food you will need to feed them. Wood and Stone are both building resources 
+                  different buildings will require differnet amounts of these resources.</p>
+                <h2>Buildings</h2>
+                <p>Buildings are used to attain resources, increase housing space to increase 
+                  population, and repopulate. All buildings have housing space, although houses 
+                  have much more than any other building. Your population will not increase unless 
+                  you have the housing space for it. Houses are also required to increase the 
+                  population size, peasants will go into a house to have a kid. Farms, forrests, 
+                  and quarries are all buildings use to produce resources.</p>
+                <h2>Other</h2>
+                <p>You can control the speed of the game by clicking on the speed button at the 
+                  bottom. You can also control if the peasants will repopulate. Note that your 
+                  peasants can die of old age so it is wise to keep you age diverse.</p>
+              </div>
+              <div id="popup-building" class="popups" style="display: none;">
+                  <h1>Building</h1>
+                  <hr>
+                  <input type="radio" name="building-button" onChange="updateMouseBuilding()" value="REMOVE" checked> Remove Building<br>
+                  <input type="radio" name="building-button" onChange="updateMouseBuilding()" value="WOODEN_HOUSE"> Wooden House<br>
+                  <input type="radio" name="building-button" onChange="updateMouseBuilding()" value="STONE_HOUSE"> Stone House<br>
+                  <input type="radio" name="building-button" onChange="updateMouseBuilding()" value="FARM"> Farm<br>
+                  <input type="radio" name="building-button" onChange="updateMouseBuilding()" value="FORREST"> Forrest<br>
+                  <input type="radio" name="building-button" onChange="updateMouseBuilding()" value="QUARRY"> Quarry
+                </div>
+                <div id="popup-resources" class="popups" style="display: none;">
+                  <h1>Resources</h1>
+                  <hr>
+                  <p>Food: <span id="popup-res-food">10</span></p>
+                  <p>Wood: <span id="popup-res-wood">10</span></p>
+                  <p>Stone: <span id="popup-res-stone">10</span></p>
+                  <hr>
+                  <p>Houses: <span id="popup-res-houses">3</span></p>
+                  <p>Population: <span id="popup-res-population">12</span></p>
+                  <p>Housing Space: <span id="popup-res-hs">25</span></p>
+                  <p>Females: <span id="popup-res-females">3</span></p>
+                  <p>Males: <span id="popup-res-males">3</span></p>
+                  <hr>
+                  <p>Farms: <span id="popup-res-farms">5</span></p>
+                  <p>Food Production: <span id="popup-res-foodproduction">15</span></p>
+                  <p>Food Consumption: <span id="popup-res-foodconsumption">15</span></p>
+                  <hr>
+                  <p>Forrests: <span id="popup-res-forrests">3</span></p>
+                  <hr>
+                  <p>Quarries: <span id="popup-res-quarries">1</span></p>
+                </div>
+            </div>
+          </div>
+          <div id="controls">
+            <!-- todo: job priority-->
+            <button class="control" id="control-building" onClick="openBuilding()">Building</button>
+            <button class="control" id="control-population">Population (4)</button>
+            <button class="control" id="control-resources" onClick="openResources()">Wood(2) Stone(4) Food(50)</button>
+            <!--<button class="control" id="control-log">Log</button>-->
+            <button class="control" id="control-tutorial" onClick="openPopup('popup-tutorial')">Tutorial</button>
+            <button class="control" id="control-speed" onClick="toggleSpeed()">Speed(x1)</button>
+            <button class="control" id="control-pause-resume" onClick="toggleGameRunning()" style="background: url(images/pause.png);width:24px;height:24px;"></button>
+            <div class="control" style="padding-right: 5px;">
+              <input type="checkbox" id="control-repopulate" onClick="toggleRepopulation()" checked>Repopulate
+            </div>
+          </div>
         </div>
       </div>
     </div>
