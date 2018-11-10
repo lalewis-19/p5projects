@@ -1,0 +1,91 @@
+{
+    "name": "RainStorm",
+    "wood": 0,
+    "stone": 0,
+    "food": 60,
+    "buildings": [
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY"
+    ],
+    "years": [],
+    "repeatyears": [
+        {
+            "name": "RAINSTORM",
+            "params": [2]
+        }
+    ],
+    "people": [
+        {
+            "x": 160,
+            "age": 0,
+            "sex": "MALE"
+        },
+        {
+            "x": 480,
+            "age": 0,
+            "sex": "FEMALE"
+        }
+    ],
+    "background": "https://i.imgur.com/bLxcjh3.jpg",
+    "ss": "images/ss.png",
+    "grassblock": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "woodenhouse": {
+        "x": 32,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "forrest": {
+        "x": 64,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "farm": {
+        "x": 96,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "quarry": {
+        "x": 128,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "stonehouse": {
+        "x": 160,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "grass": {
+        "x": 192,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    }
+}

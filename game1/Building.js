@@ -63,6 +63,28 @@ const BUILDING_TYPE = {
     }
 }
 
+function getBuildingType(value){
+	switch (value.toUpperCase()){
+		case "WOODEN_HOUSE":
+			return BUILDING_TYPE.WOODEN_HOUSE;
+			break;
+		case "STONE_HOUSE":
+			return BUILDING_TYPE.STONE_HOUSE;
+			break;
+		case "FARM":
+			return BUILDING_TYPE.FARM;
+			break;
+		case "QUARRY":
+			return BUILDING_TYPE.QUARRY;
+			break;
+		case "FORREST":
+			return BUILDING_TYPE.FORREST;
+			break;
+		default: // EMPTY
+			return BUILDING_TYPE.EMPTY;
+	}
+}
+
 /*
 Types:
 0: Empty
@@ -93,9 +115,9 @@ class Building{
 		fill(128, 128, 128, 128);
 		stroke(2);
 		// the +1 and having the width of 30 is because p5.js is stoopid
-		this.buildingStats.sprite.drawSprite(x, getGameHeight()-blockSize*2,blockSize,blockSize);
+		this.buildingStats.sprite.drawSprite(x, height-blockSize*2,blockSize,blockSize);
 		if (this.burning){
-			SPRITES.BUILDING_FIRE.drawSprite(x, getGameHeight()-blockSize*2, blockSize, blockSize);
+			SPRITES.BUILDING_FIRE.drawSprite(x, height-blockSize*2, blockSize, blockSize);
 		}
 	}
 
@@ -105,7 +127,7 @@ class Building{
 			return;
 		// building on fire
 		if (this.burning && this.canBurn){
-			this.hp -= (burnDamage/(getFrameRate()*secondsPerYear));
+			this.hp -= (burnDamage*getCurrentWeather().getBurnDamageMultiplier()/(getFrameRate()*secondsPerYear));
 		} 
 		else if (this.hp<this.maxHP){
 			this.hp += (this.buildingRegenRate/(getFrameRate()*secondsPerYear));
@@ -121,13 +143,16 @@ class Building{
 		// production
 		switch (this.buildingStats){
 			case BUILDING_TYPE.FARM:
-				food += (foodProduction*this.inhabitants)/(getFrameRate()*secondsPerYear);
+				food += (foodProduction*getCurrentWeather().getFoodProductionMultiplier()
+						*this.inhabitants)/(getFrameRate()*secondsPerYear);
 				break;
 			case BUILDING_TYPE.QUARRY:
-				stone += (stoneProduction*this.inhabitants)/(getFrameRate()*secondsPerYear);
+				stone += (stoneProduction*getCurrentWeather().getStoneProductionMultiplier()
+						*this.inhabitants)/(getFrameRate()*secondsPerYear);
 				break;
 			case BUILDING_TYPE.FORREST:
-				wood += (woodProduction*this.inhabitants)/(getFrameRate()*secondsPerYear);
+				wood += (woodProduction*getCurrentWeather().getWoodProductionMultiplier()
+						*this.inhabitants)/(getFrameRate()*secondsPerYear);
 				break;
 		}
 	}

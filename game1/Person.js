@@ -15,6 +15,13 @@ const SEX = {
 	FEMALE: 1
 }
 
+function getSex(value){
+	if (value.toLowerCase() === "female"){
+		return SEX.FEMALE;
+	}
+	return SEX.MALE;
+}
+
 class Person{
 
     constructor(x = width/2, age = 0, sex = -1){
@@ -108,15 +115,15 @@ class Person{
 			//rect(this.x, height-blockSize-32, 16, 32);
 			// how far over should the picture be moved over to get a version of the player model that fits the status
 			if (this.burning){
-				this.spriteFire.drawSprite(this.x,getGameHeight()-blockSize-blockSize,blockSize/2,blockSize);
+				this.spriteFire.drawSprite(this.x,height-blockSize-blockSize,blockSize/2,blockSize);
 			} else {
-				this.sprite.drawSprite(this.x,getGameHeight()-blockSize-blockSize,blockSize/2,blockSize);
+				this.sprite.drawSprite(this.x,height-blockSize-blockSize,blockSize/2,blockSize);
 			}
 		}
 	}
 
 	update(){
-		if (getFrameRate() == 0)
+		if (getFrameRate() <= 5)
 			return;
 		// perform objective
 		switch (this.objectiveType){
@@ -124,6 +131,7 @@ class Person{
 				// check if they have reached roaming point
 				if (this.x < this.objective && this.x+this.pWidth > this.objective){
 					this.newObjective();
+					break;
 				}
 				// to the left of objective go right
 				if (this.x < this.objective){
@@ -204,14 +212,14 @@ class Person{
 		this.age += 1/(getFrameRate()*secondsPerYear);
 
 		// die of old age
-		if (this.age>=80){
+		if (this.age>=45){
 			this.die("old age");
 			return;
 		}
 
 		// take damage
 		if (this.burning){
-			this.hp -= personBurnDamage/(getFrameRate()*secondsPerYear);
+			this.hp -= burnDamage/(getFrameRate()*secondsPerYear);
 			if (this.hp < 0){
 				this.die("burns");
 				return;
@@ -219,7 +227,7 @@ class Person{
 		}
 
         // TODO: this is realy confusing just clean it up and check every second or something
-		if (!this.lookingForLove && this.lover==-1){
+		if (!this.lookingForLove && this.lover==-1 && repopulating){
 			// love
 			// 0-5% chance increase in love
 			this.love += (personLove)/(getFrameRate()*secondsPerYear);
@@ -238,7 +246,7 @@ class Person{
 		if (this.lover==-1 && openSpaceInHouse(2) && this.lookingForLove && 
 				(findClosestBuilding(this.x, BUILDING_TYPE.WOODEN_HOUSE)!=-1 || 
 				findClosestBuilding(this.x, BUILDING_TYPE.STONE_HOUSE)!=-1) 
-				&& !needHouses() && this.canWork){
+				&& !needHouses() && this.canWork && repopulating){
 			if (this.findLove()){
 				var index = -1;
 				index = findClosestBuilding(this.x, BUILDING_TYPE.STONE_HOUSE);
@@ -297,7 +305,8 @@ class Person{
 		// roaming
 		else {
 			this.objectiveType = 0;
-			this.objective = Math.random()*(blockSize*buildings.length);
+			var random = Math.random();
+			this.objective = random*(blockSize*buildings.length);
 		}
 
 	}

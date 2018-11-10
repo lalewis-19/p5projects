@@ -182,13 +182,6 @@ class HUD extends SketchScreen {
 			screenManager.openScreen(Tutorial1);
 		}, width-34, 2, 32, 32, 72)); // h
 		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures
-		for (var q = 0; q < godPowers.length; q++){
-			let index = q.valueOf();
-			var callback = function(screen) {
-				getGodPower(godPowers[index].constructor.name).toggleActivation();
-			}
-			this.addEntity(new SketchButton(callback, q * 48 +8, getGameHeight()+hudHeight/2-8, 32, 32, 49+q));
-		}
     }
 
     draw(){
@@ -210,13 +203,6 @@ class HUD extends SketchScreen {
 		noStroke();
 		textSize(16);
 		text("God Powers", 8, getGameHeight()+16);
-		for (var q = 0; q < godPowers.length; q++){
-			if (godPowers[q].isActive()){
-				godPowers[q].getSpriteActive().drawSprite(q * 48 +8, getGameHeight()+hudHeight/2-8, 32, 32);
-			} else {
-				godPowers[q].getSpriteUnactive().drawSprite(q * 48 +8, getGameHeight()+hudHeight/2-8, 32, 32);
-			}
-		}
         // draw global info: pop, food, wood, stone
         textSize(14);
 		fill(0);

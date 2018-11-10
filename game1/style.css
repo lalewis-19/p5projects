@@ -1,17 +1,102 @@
+@font-face {
+	font-family: "DP Comic";
+	src: url("fonts/dpcomic.ttf");
+}
 
-#main {
+body {
+	padding: 0; margin: 0;
+	font-family: "DP Comic";
+}
+
+button {
+	font-family: "DP Comic";
+}
+
+#screen {
 	text-align:center;
 	width: 100%;
 }
 
-#main-content{
-	margin:auto;
-	display:inline-block;
+#main-holder{
+	margin: auto;
+	overflow: hidden;
+	width: 841px;
 }
 
+#main {
+	display: block;
+}
+
+#top-content{
+	margin:0;
+	display:table;
+	overflow: hidden;
+}
+
+#popup-info{
+	float:left;
+	background: rgb(160, 135, 52);;
+	height: 320px;
+	width: 200px;
+	overflow: auto;
+}
+
+#controls{
+	margin: 0px;
+	width: 840px;
+	background: rgb(99,83,32);
+	height: 32px;
+	overflow:auto;
+	display: flex;
+	align-items: center;
+}
+
+.control {
+	font-size: 17px;
+	vertical-align: middle;
+	margin-left: 10px;
+	background: rgb(160, 135, 52);
+	border: none;
+	outline:0;
+}
+
+input {
+	vertical-align:middle; 
+}
+
+#popup-info hr {
+	margin-left: 25%;
+	width: 50%;
+	display: block;
+    height: 1px;
+    border: 0;
+    border-top: 1px solid black;
+    padding: 0; 
+}
+
+#popup-info h1{
+	margin-bottom: 6px;
+	margin-top: 24px;
+}
+
+#popup-info p {
+	font-size: 14px;
+	margin-top: 12px;
+	margin-bottom: 0px;
+	text-align:justify;
+	margin-left: 6px;
+	margin-right: 6px;
+}
+
+#popup-info input[type="radio"] {
+	vertical-align:middle;
+}
+
+
 #canvas-holder{
+	float: left;
 	font-size:0;
 	width:640px;
+	background: blue;
 	/* border:1px solid black; */
-	display: inline-block;
 }

@@ -1,0 +1,246 @@
+{
+    "name": "Test-Map",
+    "wood": 15,
+    "stone": 5,
+    "food": 120,
+    "buildings": [
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "WOODEN_HOUSE",
+        "FARM",
+        "FORREST",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY",
+        "EMPTY"
+    ],
+    "years": [
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "RAINFALL",
+            "params": [6]
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "RAINFALL",
+            "params": []
+        },
+        {
+            "name": "RAINSTORM",
+            "params": [4]
+        },
+        {
+            "name": "RAINFALL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "RAINFALL",
+            "params": []
+        },
+        {
+            "name": "RAINSTORM",
+            "params": [12]
+        },
+        {
+            "name": "RAINFALL",
+            "params": []
+        },
+        {
+            "name": "RAINFALL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "SNOW",
+            "params": []
+        },
+        {
+            "name": "SNOW",
+            "params": []
+        },
+        {
+            "name": "SNOW",
+            "params": []
+        },
+        {
+            "name": "RAINFALL",
+            "params": []
+        },
+        {
+            "name": "BLIZZARD",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "RAINFALL",
+            "params": []
+        },
+        {
+            "name": "RAINSTORM",
+            "params": [6]
+        },
+        {
+            "name": "BLIZZARD",
+            "params": []
+        }
+    ],
+    "repeatyears": [
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "RAINFALL",
+            "params": []
+        },
+        {
+            "name": "RAINSTORM",
+            "params": [5]
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "NORMAL",
+            "params": []
+        },
+        {
+            "name": "SNOW",
+            "params": []
+        },
+        {
+            "name": "BLIZZARD",
+            "params": []
+        }
+    ],
+    "people": [
+        {
+            "x": 128,
+            "age": 0,
+            "sex": "MALE"
+        },
+        {
+            "x": 256,
+            "age": 0,
+            "sex": "MALE"
+        },
+        {
+            "x": 384,
+            "age": 0,
+            "sex": "FEMALE"
+        },
+        {
+            "x": 512,
+            "age": 0,
+            "sex": "FEMALE"
+        }
+    ],
+    "background": "https://i.imgur.com/bLxcjh3.jpg",
+    "ss": "images/ss.png",
+    "grassblock": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "woodenhouse": {
+        "x": 32,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "forrest": {
+        "x": 64,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "farm": {
+        "x": 96,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "quarry": {
+        "x": 128,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "stonehouse": {
+        "x": 160,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    },
+    "grass": {
+        "x": 192,
+        "y": 0,
+        "w": 32,
+        "h": 32
+    }
+}

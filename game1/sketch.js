@@ -2,11 +2,14 @@
 var canvas;
 
 var blockSize = 32; // pixels
+var mapName = "";
+var mapData;
 
 // all arrays
 var buildings;
 var people;
-var godPowers;
+var years; // different weather
+var repeatYears; // after years complete cycle through this
 
 // currently owned
 var stone = 0.0;
@@ -21,7 +24,7 @@ var woodProduction = 1.0;
 // seconds to one year TODO
 var secondsPerYear = 8;
 var gameYear = 0.0;
-var speeds = [{name:"x.5", speed: 16}, {name:"x1", speed: 8}, {name:"x2", speed: 4}, {name:"x4", speed: 2}, {name:"x8", speed: 1}];
+var speeds = [{name:"x1/2", speed: 35}, {name:"x1", speed: 20}, {name:"x2", speed: 15}, {name:"x4", speed: 10}, {name:"x8", speed: 5}];
 var speedIndex = 1;
 
 // food eaten per person per year
@@ -29,20 +32,18 @@ var foodConsumption = 0.5;
 
 // burning
 var burnDamage = 50;
-var burnStopChance = 0.3; // chances of a burning building to stop burning 0 - no chance, 1 - 100% chance
-var buildingRegenRate = 0.5;
+var buildingRegenRate = 1; // TODO improve!
 
 // people
 var personHealth = 100.0;
-var personSpeed = 320.0; // pixels traveled in a year
-var personSpeedRandom = 100; // +/- from the personSpeed
-var personBurnDamage = 100; // per year
+var personSpeed = 640.0; // pixels traveled in a year
+var personSpeedRandom = 240; // +/- from the personSpeed
 var personLove = 5; // chance to fall in love % increase every year.
+var repopulating = true;
 
 // images
 var ss;
 var backgroundImage;
-//var imageMultiplier = 1; // make images bigger
 
 // game boolean => used to pause and resume game
 var running = true;
@@ -54,12 +55,61 @@ var debugKey = 192; // ascii code for `
 // TODO: https://www.1001fonts.com/dpcomic-font.html
 var font;
 
-// hud
-var hudHeight = 64;
 
-var screenManager;
+var mouseBuildingController, mouseResourcesController;
+
+class AnimatedSpriteCounter {
+	constructor(speed, imgs){
+		this.speed = speed;
+		this.imgs = imgs;
+		this.index = 0;
+		this.lastTime = new Date().getTime();
+	}
+
+	setSpeed(speed){
+		this.speed = speed;
+	}
+
+	getSpeed(){
+		return this.speed;
+	}
+
+	updateIndex(){
+		var interval = 1/(this.imgs*this.speed);
+		if (new Date().getTime()-this.lastTime>=interval){
+			this.lastTime = new Date().getTime();
+			this.index++;
+			if (this.index>=this.imgs)
+				this.index = 0;
+		}
+	}
+
+	getIndex(update = true){
+		if (update)
+			this.updateIndex();
+		return this.index;
+	}
+}
 
 class Sprite {
+	constructor(imgs){
+		this.imgs = imgs;
+	}
+
+	drawSprite(x, y, w, h, i = 0){
+		this.imgs[i].drawSprite(x, y, w, h);
+	}
+
+	getImage(i){
+		return this.imgs[i];
+	}
+
+	imageLength(){
+		return this.imgs.length;
+	}
+}
+
+class SpriteImage {
 	constructor(x, y, w, h){
 		this.x = x;
 		this.y = y;
@@ -89,37 +139,112 @@ class Sprite {
 
 }
 
+class MouseController{
+	constructor(){
+		this.control = false;
+	}
+
+	onMouseMoved(){}
+	onMousePressed(){}
+	draw(){}
+
+	giveControl(){
+		this.control = true;
+	}
+
+	removeControl(){
+		this.control = false;
+	}
+
+	hasControl(){
+		return this.control;
+	}
+}
+
+class ResourcesMouseController extends MouseController{
+	constructor(){
+		super();
+	}
+	
+	draw(){
+		if (this.hasControl()){
+			updateResourcesHtml();
+		}
+	}
+}
+
+class BuildingMouseController extends MouseController{
+	constructor(){
+		super();
+		this.building = BUILDING_TYPE.EMPTY;
+		this.index = 0;
+	}
+
+	open(building){
+		this.building = building;
+		openBuildingMouseController();
+	}
+
+	draw(){
+		if (this.hasControl())
+			this.building.sprite.drawSprite(this.index*blockSize, height-blockSize*2,blockSize,blockSize)
+	}
+
+	onMouseMoved(){
+		this.index = parseInt(limit(mouseX/blockSize, buildings.length-1, 0));
+	}
+
+	onMousePressed(){
+		if (!this.hasControl())
+			return;
+		if (this.building == BUILDING_TYPE.EMPTY)
+			buildings[index].resetType();
+		buildBuilding(this.building, this.index);
+	}
+
+	getIndex(){
+		return this.index;
+	}
+}
+
 const SPRITES = {
-	GRASS_BLOCK: new Sprite(0, 0, 32, 32),
-	WOODEN_HOUSE: new Sprite(32, 0, 32, 32),
-	FORREST: new Sprite(64, 0, 32, 32),
-	FARM: new Sprite(96, 0, 32, 32),
-	QUARRY: new Sprite(128, 0, 32, 32),
-	STONE_HOUSE: new Sprite(160, 0, 32, 32),
-	GRASS: new Sprite(192, 0, 32, 32),
-	BUILDING_FIRE: new Sprite(224, 0, 32, 32),
-	LIGHTNING_RIGHT: new Sprite(32, 32, 16, 32),
-	LIGHTNING_LEFT: new Sprite(48, 32, 15, 31), // check values
-	// power effects
-	LIGHTNING_POWER_ACTIVE: new Sprite(64, 32, 32, 32),
-	LIGHTNING_POWER_UNACTIVE: new Sprite(96, 32, 32, 32),
-	SUN_POWER_ACTIVE: new Sprite(128, 32, 32, 32),
-	SUN_POWER_UNACTIVE: new Sprite(160, 32, 32, 32),
-	SPAWN_POWER_ACTIVE: new Sprite(192, 32, 32, 32),
-	SPAWN_POWER_UNACTIVE: new Sprite(224, 32, 32, 32),
+	GRASS_BLOCK: new Sprite([new SpriteImage(0, 0, 32, 32)]),
+	WOODEN_HOUSE: new Sprite([new SpriteImage(32, 0, 32, 32)]),
+	FORREST: new Sprite([new SpriteImage(64, 0, 32, 32)]),
+	FARM: new Sprite([new SpriteImage(96, 0, 32, 32)]),
+	QUARRY: new Sprite([new SpriteImage(128, 0, 32, 32)]),
+	STONE_HOUSE: new Sprite([new SpriteImage(160, 0, 32, 32)]),
+	GRASS: new Sprite([new SpriteImage(192, 0, 32, 32)]),
+	BUILDING_FIRE: new Sprite([new SpriteImage(224, 0, 32, 32)]),
+	// weather
+	RAIN_STRAIGHT: new Sprite([new SpriteImage(288, 64, 32, 32),
+		new SpriteImage(288, 96, 32, 32),new SpriteImage(288, 128, 32, 32),
+		new SpriteImage(288, 160, 32, 32),new SpriteImage(288, 192, 32, 32),
+		new SpriteImage(288, 224, 32, 32),new SpriteImage(288, 256, 32, 32),
+		new SpriteImage(288, 288, 32, 32)]),
+	SNOW_STRAIGHT: new Sprite([new SpriteImage(256, 64, 32, 32),
+		new SpriteImage(256, 96, 32, 32),new SpriteImage(256, 128, 32, 32),
+		new SpriteImage(256, 160, 32, 32),new SpriteImage(256, 192, 32, 32),
+		new SpriteImage(256, 224, 32, 32),new SpriteImage(256, 256, 32, 32),
+		new SpriteImage(256, 288, 32, 32)]),
+	LIGHTNING_RIGHT: new Sprite([new SpriteImage(32, 32, 16, 32)]),
+	LIGHTNING_LEFT: new Sprite([new SpriteImage(48, 32, 15, 31)]), // check values
+	// power effects - unused
+	LIGHTNING_POWER_ACTIVE: new Sprite([new SpriteImage(64, 32, 32, 32)]),
+	LIGHTNING_POWER_UNACTIVE: new Sprite([new SpriteImage(96, 32, 32, 32)]),
+	SUN_POWER_ACTIVE: new Sprite([new SpriteImage(128, 32, 32, 32)]),
+	SUN_POWER_UNACTIVE: new Sprite([new SpriteImage(160, 32, 32, 32)]),
+	SPAWN_POWER_ACTIVE: new Sprite([new SpriteImage(192, 32, 32, 32)]),
+	SPAWN_POWER_UNACTIVE: new Sprite([new SpriteImage(224, 32, 32, 32)]),
 	// character models
-	CHAR1_MALE: new Sprite(0, 64, 16, 32),
-	CHAR1_FEMALE: new Sprite(16, 64, 16, 32),
-	CHAR1_MALE_FIRE: new Sprite(32, 64, 16, 32),
-	CHAR1_FEMALE_FIRE: new Sprite(48, 64, 16, 32),
-	CHAR2_MALE: new Sprite(0, 96, 16, 32),
-	CHAR2_FEMALE: new Sprite(16, 96, 16, 32),
-	CHAR2_MALE_FIRE: new Sprite(32, 96, 16, 32),
-	CHAR2_FEMALE_FIRE: new Sprite(48, 96, 16, 32),
-	// other
-	PAUSE: new Sprite(288, 0, 24, 24),
-	RESUME: new Sprite(288, 24, 24, 24),
-	HELP: new Sprite(256, 0, 32, 32),
+	CHAR1_MALE: new Sprite([new SpriteImage(0, 64, 16, 32)]),
+	CHAR1_FEMALE: new Sprite([new SpriteImage(16, 64, 16, 32)]),
+	CHAR1_MALE_FIRE: new Sprite([new SpriteImage(32, 64, 16, 32)]),
+	CHAR1_FEMALE_FIRE: new Sprite([new SpriteImage(48, 64, 16, 32)]),
+	CHAR2_MALE: new Sprite([new SpriteImage(0, 96, 16, 32)]),
+	CHAR2_FEMALE: new Sprite([new SpriteImage(16, 96, 16, 32)]),
+	CHAR2_MALE_FIRE: new Sprite([new SpriteImage(32, 96, 16, 32)]),
+	CHAR2_FEMALE_FIRE: new Sprite([new SpriteImage(48, 96, 16, 32)])
 }
 
 function preload(){
@@ -127,31 +252,28 @@ function preload(){
 	font = loadFont("fonts/dpcomic.ttf");
 	ss = loadImage("images/ss.png");
 	backgroundImage = loadImage("https://i.imgur.com/bLxcjh3.jpg");
+	var url_string = window.location.href;
+	var url = new URL(url_string);
+	var map = url.searchParams.get("map");
+	var mapLoc = "maps/test-map.json";
+	if (map!=null){
+		mapLoc = "maps/"+map+".json";
+	}
+	mapData = loadJSON(mapLoc, loadMap);
 }
 
 function setup() {
 	debugMode = false;
 
 	// setup canvas
-	canvas = createCanvas(640, 320+hudHeight);
+	canvas = createCanvas(640, 320);
 
-	var worldWidth = 20;
+	// TODO: there is an issue where the mouseMoved() is being called before mouseBuildingController
+	// is initialized.
+	mouseBuildingController = new BuildingMouseController();
+	mouseResourcesController = new ResourcesMouseController();
 
-	buildings = [];
-	people = [new Person(width/2, 0, 0), new Person(width/2, 0, 1)];
-	godPowers = [new Lightning(), new Sun(), new SpawnPerson()];
-	for (var q = 0; q < worldWidth; q++){
-		buildings[q] = new Building();
-	}
-	
-	// setup screens
-	screenManager = new SketchScreenManager();
-	screenManager.addScreen(new HUD());
-	screenManager.addScreen(new GlobalInfo());
-	screenManager.addScreen(new Tutorial1());
-	screenManager.addScreen(new Tutorial2());
-	screenManager.addScreen(new Tutorial3());
-	screenManager.addScreen(new Tutorial4());
+	secondsPerYear = speeds[speedIndex].speed;
 
 	//Tutorial1
 	//Tutorial1
@@ -161,7 +283,7 @@ function setup() {
 	// assign canvas to html div
 	canvas.parent("canvas-holder");
 
-	setFrameRate(32);
+	setFrameRate(30);
 }
 
 /**
@@ -173,13 +295,14 @@ function keyReleased(){
 		debugMode = !debugMode;
 		console.log("debug mode: " + debugMode);
 	}
-	screenManager.onKeyReleased();
 }
 
 /**
  * draw from p5js
  */
 function draw() {
+	updateControllerHtml();
+	mouseResourcesController.draw();
 	textFont(font);
 	if (running && getFrameRate() != 0 && secondsPerYear != 0){
 		gameYear += 1/(getFrameRate()*secondsPerYear);
@@ -187,30 +310,76 @@ function draw() {
 	//background(255);
 	//new Sprite(0, 32, 32, 32).drawSprite(0, 0, 640, 320);
 	///*
-	image(backgroundImage, 0, 0, width, getGameHeight());
-	fill(99,83,32);
-	noStroke();
-	rect(0, getGameHeight(), width, hudHeight);
+	image(backgroundImage, 0, 0, width, height);
 	//console.log(getFrameRate());
-	builderAI();
+	//builderAI();
 	for (var q = 0; q < buildings.length; q++){
 		// draw grass below building
-		SPRITES.GRASS_BLOCK.drawSprite(q*blockSize, getGameHeight()-blockSize, blockSize, blockSize);
+		SPRITES.GRASS_BLOCK.drawSprite(q*blockSize, height-blockSize, blockSize, blockSize);
+		if (mouseBuildingController.hasControl() && mouseBuildingController.getIndex()==q)
+			continue;
 		buildings[q].draw(q*blockSize);
 		if (running)
 			buildings[q].update();
 	}
+	mouseBuildingController.draw();
 	for (var q = 0; q < people.length; q++){
 		people[q].draw();
 		if (running)
 			people[q].update();
 	}
-	for (var q = 0; q < godPowers.length; q++){
-		godPowers[q].draw();
-		godPowers[q].update();
-	}
-	screenManager.draw();
-	//*/
+	// update and draw weather
+	getCurrentWeather().update();
+	getCurrentWeather().draw();
+	// darkness from weather
+	var maxDark = 120;
+	fill(0, 0, 0, maxDark-maxDark*getCurrentWeather().getLighting());
+	noStroke();
+	rect(0, 0, width, height);
+	textAlign(CENTER);
+	textSize(20);
+	// draw year
+	fill(99,83,32);
+	stroke(0);
+	var sideLength = 32;
+	rect(width/2-sideLength, 0, sideLength*2, 32);
+	
+	fill(255);
+	stroke(0);
+	text("YEAR", width/2, 16);
+	text(""+parseInt(gameYear), width/2, 30);
+	textAlign(RIGHT);
+	text(weathText, width-padding, 12+padding);
+
+	// weather
+	fill(99,83,32);
+	stroke(0);
+	textSize(16);
+	var weathText = "Weather: " + getCurrentWeather().getName();
+	var padding = 6;
+	var weathWidth = textWidth(weathText)+padding*2;
+	rect(width-weathWidth, 0, weathWidth, 12+padding*2);
+
+	fill(255);
+	stroke(0);
+	textAlign(RIGHT);
+	text(weathText, width-padding, 12+padding);
+
+	// map
+	fill(99,83,32);
+	stroke(0);
+	textSize(16);
+	var weathText = "Map: " + mapName;
+	var padding = 6;
+	var weathWidth = textWidth(weathText)+padding*2;
+	rect(0, 0, weathWidth, 12+padding*2);
+
+	fill(255);
+	stroke(0);
+	textAlign(LEFT);
+	text(weathText, padding, 12+padding);
+
+	// testing
 }
 
 function pause(){
@@ -221,12 +390,100 @@ function resume(){
 	running = true;
 }
 
-function onMousePressed() {
-	for (var q = 0; q < godPowers.length; q++){
-		if (godPowers[q].isActive() && mouseY < getGameHeight())
-			godPowers[q].mouseClicked();
+function toggleGameRunning(){
+	if (running){
+		pause();
+	} else {
+		resume();
 	}
-	screenManager.onMouseReleased();
+}
+
+function mouseMoved(){
+	mouseBuildingController.onMouseMoved();
+}
+
+function openBuildingMouseController(){
+	removeAllMouseControllers();
+	mouseBuildingController.giveControl();
+}
+
+function openResourcesMouseController(){
+	removeAllMouseControllers();
+	mouseResourcesController.giveControl();
+}
+
+function removeAllMouseControllers(){
+	mouseBuildingController.removeControl();
+	mouseResourcesController.removeControl();
+}
+
+/**
+ * @returns a number limited by the bounds given.
+ * @param {*} value raw number.
+ * @param {*} max the maximum number allowed.
+ * @param {*} min the minimum number allowed.
+ */
+function limit(value, max, min){
+	return Math.max(min, Math.min(value, max));
+}
+
+function onMousePressed(){
+	mouseBuildingController.onMousePressed();
+	mouseResourcesController.onMousePressed();
+}
+
+function closeAllPopups(){
+	removeAllMouseControllers();
+	var popups = document.getElementsByClassName("popups");
+	for(var q = 0; q < popups.length; q++){
+		popups[q].style.display = "none";
+	}
+}
+
+function openPopup(id){
+	closeAllPopups();
+	document.getElementById(id).style.display = "block";
+}
+
+function openBuilding(){
+	openPopup("popup-building");
+	updateMouseBuilding();
+}
+
+function openResources(){
+	openPopup("popup-resources");
+	openResourcesMouseController();
+}
+
+function updateMouseBuilding(){
+	var buildingSelected = document.querySelector('input[name="building-button"]:checked').value;
+	switch (buildingSelected){
+		case "REMOVE":
+			mouseBuildingController.open(BUILDING_TYPE.EMPTY)
+			break;
+		case "WOODEN_HOUSE":
+			mouseBuildingController.open(BUILDING_TYPE.WOODEN_HOUSE)
+			break;
+		case "STONE_HOUSE":
+			mouseBuildingController.open(BUILDING_TYPE.STONE_HOUSE)
+			break;
+		case "FARM":
+			mouseBuildingController.open(BUILDING_TYPE.FARM)
+			break;
+		case "FORREST":
+			mouseBuildingController.open(BUILDING_TYPE.FORREST)
+			break;
+		case "QUARRY":
+			mouseBuildingController.open(BUILDING_TYPE.QUARRY)
+			break;
+	}
+}
+
+/**
+ * toggles whether or not the peasants are repopulating.
+ */
+function toggleRepopulation(){
+	repopulating = !repopulating;
 }
 
 /**
@@ -345,11 +602,15 @@ function getUseableBuildingsByType(bType){
 	return sum;
 }
 
+/**
+ * toggles the speed of the game between the values in speeds.
+ */
 function toggleSpeed(){
 	speedIndex++;
 	if (speedIndex >= speeds.length)
 		speedIndex = 0;
 	secondsPerYear = speeds[speedIndex].speed;
+	updateControllerHtml();
 }
 
 /**
@@ -585,19 +846,6 @@ function explosion(x, radius, max, min = 0, reason = "explosion"){
 }
 
 /**
- * @returns the god power that matches the class otherwise null.
- * @param {class} power class of the god power.
- */
-function getGodPower(power){
-	for (var q = 0; q < godPowers.length; q++){
-		if (godPowers[q].constructor.name == power){
-			return godPowers[q];
-		}
-	}
-	return null;
-}
-
-/**
  * @returns True if there is enough empty space in at least one house.
  * @param {number} space the number of space needed in a house.
  */
@@ -644,12 +892,99 @@ function getPopulationBySex(sex){
 	return sum;
 }
 
+function spawnNewPerson(){
+	people[people.length] = new Person();
+}
+
 /**
- * @returns the height of the game excluding the hud at the bottom.
+ * @returns the current weather in the world. First it will use the years array, after
+ * the game year has gone passed the size of the years array it uses repeat years.
  */
-function getGameHeight(){
-	return height-hudHeight;
+function getCurrentWeather(){
+	var year = parseInt(gameYear);
+	if (year < years.length){
+		return years[year];
+	} else {
+		return repeatYears[(year-years.length)%repeatYears.length];
+	}
+}
+
+/**
+ * updates the buttons in the controller on the bottom of the screen.
+ */
+function updateControllerHtml(){
+	document.getElementById("control-population").innerHTML = "Population ("+getPopulation()+")";
+	document.getElementById("control-resources").innerHTML = "Food ("+parseInt(food)+") Wood ("+parseInt(wood)+") Stone ("+parseInt(stone)+")";
+	document.getElementById("control-speed").innerHTML = "Speed ("+speeds[speedIndex].name+")";
+	if (running){
+		document.getElementById("control-pause-resume").style.background = "url(images/pause.png)";
+	} else {
+		document.getElementById("control-pause-resume").style.background = "url(images/resume.png)";
+	}
+}
+
+function updateResourcesHtml(){
+	document.getElementById("popup-res-food").innerHTML = ""+parseInt(food);
+	document.getElementById("popup-res-wood").innerHTML = ""+parseInt(wood);
+	document.getElementById("popup-res-stone").innerHTML = ""+parseInt(stone);
+
+	document.getElementById("popup-res-houses").innerHTML = 
+			""+(getBuildingsByType(BUILDING_TYPE.STONE_HOUSE)
+			+getBuildingsByType(BUILDING_TYPE.WOODEN_HOUSE));
+	document.getElementById("popup-res-population").innerHTML = ""+people.length;
+	document.getElementById("popup-res-females").innerHTML = ""+getPopulationBySex(SEX.FEMALE);
+	document.getElementById("popup-res-males").innerHTML = ""+getPopulationBySex(SEX.MALE);
+	document.getElementById("popup-res-hs").innerHTML = ""+getTotalHousingSpace();
+
+	document.getElementById("popup-res-farms").innerHTML = ""+getBuildingsByType(BUILDING_TYPE.FARM);
+	//document.getElementById("popup-res-activefarms").innerHTML = ""+getTotalHousingSpace(); // todo
+	document.getElementById("popup-res-foodproduction").innerHTML = ""+getTotalFoodProduction();
+	document.getElementById("popup-res-foodconsumption").innerHTML = ""+getTotalFoodConsumption();
+
+	document.getElementById("popup-res-forrests").innerHTML = ""+getBuildingsByType(BUILDING_TYPE.FORREST);
+	//document.getElementById("popup-res-activeforrests").innerHTML = ""+getTotalFoodConsumption();
+	//document.getElementById("popup-res-woodproduction").innerHtml = ""+getWoodProduction();
+
+	document.getElementById("popup-res-quarries").innerHTML = ""+getBuildingsByType(BUILDING_TYPE.QUARRY);
+	//document.getElementById("popup-res-activequarries").innerHTML = ""+getTotalFoodConsumption();
+	//document.getElementById("popup-res-stoneproduction").innerHtml = ""+getStoneProduction();
 }
 
 // html:
 // https://p5js.org/examples/dom-input-and-button.html
+
+
+function loadMap(data){
+	mapName = data.name;
+	wood = data.wood;
+	stone = data.stone;
+	food = data.food;
+	buildings = [];
+	for (var q = 0; q < data.buildings.length; q++){
+		buildings[q] = new Building(getBuildingType(data.buildings[q]));
+	}
+	years = [];
+	for (var q = 0; q < data.years.length; q++){
+		var year = data.years[q];
+		years[q] = getWeather(year.name, year.params);
+	}
+	repeatYears = [];
+	for (var q = 0; q < data.repeatyears.length; q++){
+		var year = data.repeatyears[q];
+		repeatYears[q] = getWeather(year.name, year.params);
+	}
+	people = [];
+	for (var q = 0; q < data.people.length; q++){
+		var person = data.people[q];
+		people[q] = new Person(person.x, person.age, getSex(person.sex));
+	}
+	ss = loadImage(data.ss);
+	backgroundImage = loadImage(data.background);
+	SPRITES.GRASS_BLOCK = new Sprite([new SpriteImage(data.grassblock.x,data.grassblock.y, data.grassblock.w, data.grassblock.h)]);
+	SPRITES.WOODEN_HOUSE = new Sprite([new SpriteImage(data.woodenhouse.x, data.woodenhouse.y, data.woodenhouse.w, data.woodenhouse.h)]);
+	SPRITES.FORREST = new Sprite([new SpriteImage(data.forrest.x, data.forrest.y, data.forrest.w, data.forrest.h)]);
+	SPRITES.FARM = new Sprite([new SpriteImage(data.farm.x, data.farm.y, data.farm.w, data.farm.h)]);
+	SPRITES.QUARRY = new Sprite([new SpriteImage(data.quarry.x, data.quarry.y, data.quarry.w, data.quarry.h)]);
+	SPRITES.STONE_HOUSE = new Sprite([new SpriteImage(data.stonehouse.x, data.stonehouse.y, data.stonehouse.w, data.stonehouse.h)]);
+	SPRITES.GRASS = new Sprite([new SpriteImage(data.grass.x, data.grass.y, data.grass.w, data.grass.h)]);
+}
